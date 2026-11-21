@@ -98,6 +98,89 @@
     }
   }
 
+  /* ===== Личный кабинет (как у Mail.ru): панель по аватару внизу левой полосы ===== */
+  function fmtSize(b) {
+    if (!b) return '0 МБ';
+    var gb = b / 1073741824;
+    if (gb >= 1) return (Math.round(gb * 10) / 10).toString().replace('.', ',') + ' ГБ';
+    return Math.max(1, Math.round(b / 1048576)) + ' МБ';
+  }
+  function esc(t) { var d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; }
+
+  // Ссылки кабинета; base — адрес почты ('./' внутри почты)
+  window.hatAccountHTML = function (d, base, photoUrl) {
+    var local = (d.user || '').split('@')[0];
+    var name = d.name || local;
+    var letter = esc(name.charAt(0).toUpperCase());
+    var pct = d.quota_total ? Math.min(100, Math.round(d.quota_used * 100 / d.quota_total)) : 0;
+    var quota = d.quota_total ? ('Занято ' + fmtSize(d.quota_used) + ' из ' + fmtSize(d.quota_total)) : ('Занято ' + fmtSize(d.quota_used));
+    var ava = '<div class="acc-ava" style="background:' + color(name) + '">' + letter +
+      (d.avatar && photoUrl ? '<img src="' + esc(photoUrl) + '" alt="" onerror="this.remove()">' : '') + '</div>';
+    return ava +
+      '<div class="acc-name">' + esc(name) + '</div>' +
+      '<div class="acc-mail">' + esc(d.user) + '</div>' +
+      '<div class="acc-quota"><div>' + quota + '</div><div class="acc-bar"><i style="width:' + pct + '%"></i></div></div>' +
+      '<div class="acc-links">' +
+      '<a href="' + base + '?_task=settings&_action=identities"><span>👤</span>Личные данные</a>' +
+      '<a href="' + base + '?_task=settings&_action=preferences&_section=hat_avatar"><span>🖼️</span>Фото профиля</a>' +
+      '<a href="' + base + '?_task=settings&_action=plugin.password"><span>🔒</span>Пароль и безопасность</a>' +
+      '<a href="' + base + '?_task=settings"><span>⚙️</span>Настройки почты</a>' +
+      (d.logout ? '<a href="' + esc(d.logout) + '" class="acc-out"><span>🚪</span>Выйти</a>' : '') +
+      '</div>';
+  };
+
+  function addAccount() {
+    var box = document.querySelector('#layout-menu .special-buttons');
+    if (!box || document.querySelector('.hat-acc-btn') || !window.rcmail || !rcmail.env.task || rcmail.env.task === 'login' || rcmail.env.task === 'logout') return;
+    var btn = document.createElement('a');
+    btn.href = '#';
+    btn.className = 'hat-acc-btn';
+    btn.title = 'Личный кабинет';
+    var user = (rcmail.env.username || '') + '';
+    btn.innerHTML = '<span class="hat-acc-mini">' + esc((user.charAt(0) || '?').toUpperCase()) + '</span><span class="inner">Кабинет</span>';
+    btn.querySelector('.hat-acc-mini').style.background = color(user || '?');
+    box.insertBefore(btn, box.firstChild);
+
+    // буква / фото на кнопке кабинета
+    fetch('./?_task=mail&_action=plugin.hat_status', { credentials: 'same-origin', cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var nm = d.name || (d.user || '').split('@')[0] || '?';
+        var mini = btn.querySelector('.hat-acc-mini');
+        mini.firstChild.nodeValue = nm.charAt(0).toUpperCase();
+        mini.style.background = color(nm);
+        if (d.avatar) { var i = new Image(); i.alt = ''; i.onerror = function () { this.remove(); }; i.src = './?_task=addressbook&_action=photo&_error=1&_email=' + encodeURIComponent(d.user); mini.appendChild(i); }
+      }).catch(function () {});
+
+    var panel = document.createElement('div');
+    panel.className = 'hat-acc';
+    panel.hidden = true;
+    document.body.appendChild(panel);
+
+    btn.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      if (!panel.hidden) { panel.hidden = true; return; }
+      panel.innerHTML = '<div class="acc-loading">Загрузка…</div>';
+      panel.hidden = false;
+      fetch('./?_task=mail&_action=plugin.hat_status', { credentials: 'same-origin', cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          var photo = './?_task=addressbook&_action=photo&_error=1&_email=' + encodeURIComponent(d.user);
+          panel.innerHTML = window.hatAccountHTML(d, './', photo);
+        })
+        .catch(function () { panel.innerHTML = '<div class="acc-loading">Не удалось загрузить данные</div>'; });
+    });
+    document.addEventListener('click', function (e) { if (!panel.hidden && !panel.contains(e.target)) panel.hidden = true; });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') panel.hidden = true; });
+  }
+
+  // Открыть раздел настроек по ссылке ?_section=… (например, «Фото профиля»)
+  function openSection() {
+    if (!window.rcmail || rcmail.env.task !== 'settings' || rcmail.env.action !== 'preferences') return;
+    var m = location.search.match(/[?&]_section=([a-z_]+)/);
+    if (m && rcmail.sections_list) { try { rcmail.sections_list.select(m[1]); } catch (e) {} }
+  }
+
   function addCompose() {
     var sidebar = document.getElementById('layout-sidebar');
     if (!sidebar || document.querySelector('.hat-compose')) return;
@@ -119,6 +202,8 @@
     addHomeLinks();
     addCompose();
     avatarSettings();
+    addAccount();
+    openSection();
 
     if (window.rcmail && rcmail.env.task === 'mail' && !rcmail.env.action) {
       // без колонки предпросмотра: письмо открывается целиком

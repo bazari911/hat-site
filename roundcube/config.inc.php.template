@@ -17,7 +17,7 @@ $config['cipher_method'] = 'chacha20-poly1305';
 $config['enable_installer'] = true;   // после инициализации базы выключить (false)
 
 // Плагины: стандартные из инструкции mailcow + наше оформление
-$config['plugins'] = ['archive', 'managesieve', 'acl', 'markasjunk', 'zipdownload', 'hat_theme'];
+$config['plugins'] = ['archive', 'managesieve', 'acl', 'markasjunk', 'zipdownload', 'password', 'hat_theme'];
 $config['managesieve_host'] = 'dovecot:4190';
 $config['managesieve_vacation'] = 1;
 $config['mime_types'] = '/web/rc/config/mime.types';

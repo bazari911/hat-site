@@ -57,10 +57,35 @@ class hat_theme extends rcube_plugin
         }
         $prefs = $rc->user ? (array) $rc->user->get_prefs() : [];
 
+        // Имя из профиля (Настройки → Профили)
+        $name = '';
+        try {
+            $ident = $rc->user ? $rc->user->get_identity() : null;
+            $name  = is_array($ident) ? trim((string) ($ident['name'] ?? '')) : '';
+        } catch (\Throwable $e) {
+            $name = '';
+        }
+
+        // Занятое место (сервер отдаёт в КБ)
+        $used = 0; $total = 0;
+        try {
+            $q = $rc->get_storage()->get_quota();
+            if (is_array($q)) {
+                $used  = (int) ($q['used'] ?? 0) * 1024;
+                $total = (int) ($q['total'] ?? 0) * 1024;
+            }
+        } catch (\Throwable $e) {
+        }
+
         echo json_encode([
-            'user'   => (string) $rc->get_user_name(),
-            'unread' => $unread,
-            'avatar' => !empty($prefs['hat_avatar']),
+            'user'        => (string) $rc->get_user_name(),
+            'name'        => $name,
+            'unread'      => $unread,
+            'avatar'      => !empty($prefs['hat_avatar']),
+            'quota_used'  => $used,
+            'quota_total' => $total,
+            // ссылка «Выйти» (с защитным ключом сессии)
+            'logout'      => $rc->url(['_task' => 'logout', '_token' => $rc->get_request_token()], false, true),
         ], JSON_UNESCAPED_UNICODE);
         exit;
     }

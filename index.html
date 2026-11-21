@@ -186,8 +186,25 @@
   .me-link em{margin-left:auto;font-style:normal;background:var(--blue);color:#fff;border-radius:12px;padding:1px 9px;font-size:13px}
   .me-link em:empty{display:none}
   #loginUser .btn-ghost{margin-top:12px}
-  .btn-login.user{display:flex;align-items:center;gap:8px;max-width:240px}
-  .btn-login.user span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .btn-login.user{display:flex;align-items:center;gap:8px;max-width:260px;padding:5px 14px 5px 5px;cursor:pointer}
+  .btn-login.user .top-mail{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .top-ava{position:relative;overflow:hidden;width:30px;height:30px;border-radius:50%;background:var(--blue-deep);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:800;flex:none}
+  .top-ava img,.acc-ava img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .top-right{position:relative}
+  .acc{position:absolute;right:0;top:54px;z-index:50;width:330px;background:#fff;color:var(--text);border-radius:18px;box-shadow:0 14px 44px rgba(0,0,0,.2);padding:22px 18px 12px;text-align:center}
+  .acc[hidden]{display:none}
+  .acc-ava{position:relative;overflow:hidden;width:78px;height:78px;border-radius:50%;margin:0 auto 10px;background:var(--blue);color:#fff;font-size:32px;font-weight:800;display:flex;align-items:center;justify-content:center}
+  .acc-name{font-size:17px;font-weight:700}
+  .acc-mail{font-size:13px;color:var(--muted);margin-top:2px}
+  .acc-quota{text-align:left;font-size:13px;color:#41545e;background:#f5f8fa;border-radius:12px;padding:10px 12px;margin:14px 0 8px}
+  .acc-bar{height:6px;background:#e1e8ec;border-radius:3px;margin-top:7px;overflow:hidden}
+  .acc-bar i{display:block;height:100%;background:var(--blue);border-radius:3px;min-width:3px}
+  .acc-links{display:flex;flex-direction:column;text-align:left}
+  .acc-links a{display:flex;align-items:center;gap:12px;padding:10px 8px;border-radius:10px;font-size:15px;color:var(--text)}
+  .acc-links a:hover{background:#eef6f8}
+  .acc-links a span{width:22px;text-align:center}
+  .acc-links a em{margin-left:auto;font-style:normal;background:var(--blue);color:#fff;border-radius:12px;padding:1px 9px;font-size:13px}
+  .acc-links a.acc-out{border-top:1px solid var(--line);margin-top:4px;padding-top:12px}
   .addr{margin-top:14px;font-size:13px;text-align:center;color:var(--muted)}
   .addr b{color:var(--text)}
   .ad-side{height:400px;margin-top:20px}
@@ -238,6 +255,7 @@
     <div class="top-right">
       <div class="lang"><a href="#">ҚАЗ</a><a href="#" class="on">РУС</a></div>
       <a href="#login" class="btn-login" id="topLogin">Войти</a>
+      <div class="acc" id="accPanel" hidden></div>
     </div>
   </div>
   <nav>
@@ -388,15 +406,62 @@
         ava.appendChild(img);
       }
       document.getElementById("meUnread").textContent = d.unread > 0 ? d.unread : "";
+      // Кнопка в шапке: аватар + адрес; по нажатию — личный кабинет
       const top = document.getElementById("topLogin");
       top.classList.add("user");
-      top.innerHTML = '✉️ <span data-noi18n></span>';
-      top.querySelector("span").textContent = d.unread > 0 ? `${d.user} · ${d.unread}` : d.user;
+      top.innerHTML = '<span class="top-ava"></span><span class="top-mail" data-noi18n></span>';
+      const ta = top.querySelector(".top-ava");
+      ta.textContent = (d.name || name).charAt(0).toUpperCase();
+      if (d.avatar) { const i = new Image(); i.alt = ""; i.onerror = () => i.remove(); i.src = photoUrl(d.user); ta.appendChild(i); }
+      top.querySelector(".top-mail").textContent = d.unread > 0 ? `${d.user} · ${d.unread}` : d.user;
+      ACC = d;
     }catch(e){
+      ACC = null;
       document.getElementById("loginGuest").hidden = false;
       document.getElementById("loginUser").hidden = true;
     }
   }
+  function photoUrl(u){ return MAIL_URL + "?_task=addressbook&_action=photo&_error=1&_email=" + encodeURIComponent(u); }
+
+  /* ===== Личный кабинет (как у Mail.ru) ===== */
+  let ACC = null;
+  const escH = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  function fmtSize(b){
+    if(!b) return "0 МБ";
+    const gb=b/1073741824;
+    return gb>=1 ? String(Math.round(gb*10)/10).replace(".",",")+" ГБ" : Math.max(1,Math.round(b/1048576))+" МБ";
+  }
+  function accountHTML(d){
+    const name = d.name || d.user.split("@")[0];
+    const pct = d.quota_total ? Math.min(100, Math.round(d.quota_used*100/d.quota_total)) : 0;
+    const quota = d.quota_total ? `Занято ${fmtSize(d.quota_used)} из ${fmtSize(d.quota_total)}` : `Занято ${fmtSize(d.quota_used)}`;
+    const ava = `<div class="acc-ava">${escH(name.charAt(0).toUpperCase())}${d.avatar ? `<img src="${escH(photoUrl(d.user))}" alt="" onerror="this.remove()">` : ""}</div>`;
+    const logout = /^https:\/\/mail\.kazxat\.kz\//.test(d.logout||"") ? d.logout : "";
+    return `${ava}
+      <div class="acc-name" data-noi18n>${escH(name)}</div>
+      <div class="acc-mail" data-noi18n>${escH(d.user)}</div>
+      <div class="acc-quota"><div>${quota}</div><div class="acc-bar"><i style="width:${pct}%"></i></div></div>
+      <div class="acc-links">
+        <a href="${MAIL_URL}?_task=mail&amp;_mbox=INBOX"><span>📥</span>Входящие${d.unread>0?`<em>${d.unread}</em>`:""}</a>
+        <a href="${MAIL_URL}?_task=settings&amp;_action=identities"><span>👤</span>Личные данные</a>
+        <a href="${MAIL_URL}?_task=settings&amp;_action=preferences&amp;_section=hat_avatar"><span>🖼️</span>Фото профиля</a>
+        <a href="${MAIL_URL}?_task=settings&amp;_action=plugin.password"><span>🔒</span>Пароль и безопасность</a>
+        <a href="${MAIL_URL}?_task=settings"><span>⚙️</span>Настройки почты</a>
+        ${logout ? `<a href="${escH(logout)}" class="acc-out"><span>🚪</span>Выйти</a>` : ""}
+      </div>`;
+  }
+  const accPanel = document.getElementById("accPanel");
+  document.getElementById("topLogin").addEventListener("click", e => {
+    if (!ACC) return;                     // не вошёл — обычная ссылка «Войти»
+    e.preventDefault(); e.stopPropagation();
+    if (!accPanel.hidden) { accPanel.hidden = true; return; }
+    accPanel.innerHTML = accountHTML(ACC);
+    accPanel.hidden = false;
+  });
+  document.addEventListener("click", e => { if (!accPanel.hidden && !accPanel.contains(e.target)) accPanel.hidden = true; });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") accPanel.hidden = true; });
+  // после «Выйти» почта открывает свою страницу входа; кабинет на главной пропадёт при следующей проверке
+
   checkMail();
   setInterval(checkMail, 2*60*1000);
 
