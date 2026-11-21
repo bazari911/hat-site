@@ -26,7 +26,15 @@ input[type=checkbox], input[type=radio] { accent-color: #00AFCA; }
   background-color: #FEC50C !important; color: #06566a !important; font-weight: 700;
 }
 #layout-menu a.compose:hover { background-color: #d9a400 !important; }
-#layout-menu .popover-header { background: #06566a !important; }
+/* логотип: в узкой полосе меню показываем только золотую @ с лучами */
+#layout-menu .popover-header { background: transparent !important; padding: 10px 0 !important; display: flex; justify-content: center; }
+#layout-menu #logo {
+  width: 52px !important; height: 52px !important; max-width: none !important; max-height: none !important;
+  object-fit: cover; object-position: 0 50%; margin: 0 auto;
+}
+/* нижние кнопки меню (тёмный режим, о программе, выход) — в тон меню */
+#layout-menu .special-buttons { background: transparent !important; border-top: 1px solid rgba(255,255,255,.15); }
+#layout-menu .special-buttons a { color: #e6f7fb !important; }
 
 /* --- папки и списки --- */
 .listing li.selected, .listing li.selected > a,
