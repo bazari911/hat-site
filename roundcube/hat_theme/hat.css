@@ -179,3 +179,5 @@ body.task-login #login-footer a { color: #FEC50C !important; }
 .hat-acc .acc-links a span { width: 22px; text-align: center; }
 .hat-acc .acc-links a.acc-out { border-top: 1px solid #eef2f4; margin-top: 4px; padding-top: 12px; border-radius: 0 0 10px 10px; }
 .hat-acc .acc-loading { padding: 20px; color: #6b7c85; }
+/* Elastic hides '#layout-menu .popover-header a' from 481px; keep our logo visible in the left strip */
+#layout-menu .popover-header .hat-logo-link { display: inline-block; }
