@@ -19,7 +19,7 @@ input[type=checkbox], input[type=radio] { accent-color: #00AFCA; }
 
 /* --- левая полоса с иконками: светлая, как в Mail.ru --- */
 html body #layout-menu { background: #eef3f6 !important; border-right: 1px solid #e1e8ec; }
-html body #layout-menu #taskmenu a, html body #layout-menu .special-buttons a { color: #41545e !important; border-radius: 12px; margin: 3px 6px; width: auto; }
+html body #layout-menu #taskmenu a, html body #layout-menu .special-buttons a { color: #41545e !important; border-radius: 12px; }
 html body #layout-menu #taskmenu a:hover, html body #layout-menu .special-buttons a:hover { background: #e2ecf0 !important; }
 html body #layout-menu #taskmenu a.selected { background: #d6eef3 !important; color: #06566a !important; }
 html body #layout-menu .special-buttons { background: transparent !important; border-top: 1px solid #e1e8ec; }
@@ -32,13 +32,21 @@ html body #layout-menu #taskmenu a.compose { background: #FEC50C !important; col
 @media (min-width: 1201px) {
   body.hat-has-sidebar #layout-menu .popover-header { display: none !important; }
   body.hat-has-sidebar #layout-menu #taskmenu a.compose { display: none !important; }
+  /* голубая шапка над папками, как на kazxat.kz, с крупным золотым логотипом */
   body.hat-has-sidebar #layout-sidebar > .header {
-    background: #fff url(logo-dark.svg) 16px center / auto 44px no-repeat !important; border-bottom: 0 !important; height: 72px;
+    background: linear-gradient(120deg, #06566a 0%, #0089a0 60%, #00AFCA 100%) !important;
+    border-bottom: 0 !important; height: 88px !important; position: relative;
   }
+  body.hat-has-sidebar #layout-sidebar > .header::before {
+    content: ""; position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    width: 200px; height: 66px; background: url(logo.svg) left center / contain no-repeat; pointer-events: none;
+  }
+  body.hat-has-sidebar #layout-sidebar > .header a.sidebar-menu,
+  body.hat-has-sidebar #layout-sidebar > .header a.button { color: #fff !important; }
   body.hat-has-sidebar #layout-sidebar > .header .header-title { visibility: hidden; }
   .hat-compose {
     display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 14px 12px; padding: 10px;
-    border-radius: 12px; background: #00AFCA; color: #fff !important; font-weight: 700; font-size: 15px;
+    border-radius: 12px; background: #00AFCA; color: #fff !important; font-weight: 700; font-size: 15px; margin-top: 14px;
     text-decoration: none !important; box-shadow: 0 2px 8px rgba(0,175,202,.3);
   }
   .hat-compose:hover { background: #0089a0; color: #fff !important; }
@@ -144,8 +152,8 @@ body.task-login #login-footer a { color: #FEC50C !important; }
 #layout-sidebar > .header { position: relative; }
 .hat-home { display: none; }
 @media (min-width: 1201px) {
-  body.hat-has-sidebar .hat-home { display: block; position: absolute; left: 8px; top: 12px; width: 170px; height: 48px; z-index: 2; border-radius: 10px; }
-  body.hat-has-sidebar .hat-home:hover { background: rgba(0,175,202,.06); }
+  body.hat-has-sidebar .hat-home { display: block; position: absolute; left: 8px; top: 11px; width: 206px; height: 66px; z-index: 2; border-radius: 10px; }
+  body.hat-has-sidebar .hat-home:hover { background: rgba(255,255,255,.08); }
 }
 .hat-logo-link { display: inline-block; line-height: 0; }
 
@@ -179,5 +187,37 @@ body.task-login #login-footer a { color: #FEC50C !important; }
 .hat-acc .acc-links a span { width: 22px; text-align: center; }
 .hat-acc .acc-links a.acc-out { border-top: 1px solid #eef2f4; margin-top: 4px; padding-top: 12px; border-radius: 0 0 10px 10px; }
 .hat-acc .acc-loading { padding: 20px; color: #6b7c85; }
+
+/* --- левая полоса: фиксированная ширина, подписи переносятся, а не обрезаются --- */
+@media (min-width: 481px) {
+  html body #layout-menu { width: 78px !important; min-width: 78px !important; max-width: 78px !important; flex: 0 0 78px !important; }
+  html body #layout-menu .special-buttons, html body #layout-menu #taskmenu { width: 78px !important; max-width: 78px !important; box-sizing: border-box; }
+  html body #layout-menu #taskmenu a, html body #layout-menu .special-buttons a {
+    margin: 2px 4px !important; width: 70px !important; max-width: 70px !important; box-sizing: border-box;
+    height: auto !important; min-height: 54px; padding: 7px 2px !important;
+  }
+  html body #layout-menu #taskmenu a .inner, html body #layout-menu .special-buttons a .inner {
+    white-space: normal !important; overflow: visible !important; text-overflow: clip !important;
+    display: block; text-align: center; line-height: 1.15; font-size: 10.5px !important; letter-spacing: -0.1px;
+  }
+}
+/* кружок «Кабинет» — ровный, не сжимается */
+html body .hat-acc-mini { flex: none !important; width: 30px !important; height: 30px !important; min-height: 30px; }
+
 /* Elastic hides '#layout-menu .popover-header a' from 481px; keep our logo visible in the left strip */
 #layout-menu .popover-header .hat-logo-link { display: inline-block; }
+
+/* ===== Голубой фон на всю почту, папки и письма — белыми карточками (как на kazxat.kz) ===== */
+@media (min-width: 769px) {
+  html body:not(.task-login):not(.task-logout):has(#layout), html body:not(.task-login):not(.task-logout) #layout {
+    background: linear-gradient(135deg, #c6ebf4 0%, #e3f5fa 40%, #b4e2ee 100%) !important;
+    background-attachment: fixed !important;
+  }
+  html body:not(.task-login):not(.task-logout) #layout-menu { background: transparent !important; border-right: 0 !important; }
+  html body:not(.task-login):not(.task-logout) #layout-sidebar, html body:not(.task-login):not(.task-logout) #layout-list, html body:not(.task-login):not(.task-logout) #layout-content {
+    background: #fff !important; border-radius: 16px; margin: 10px 10px 10px 0; overflow: hidden;
+    box-shadow: 0 2px 10px rgba(6,86,106,.08); border: 0 !important; height: auto !important; align-self: stretch;
+  }
+  html body:not(.task-login):not(.task-logout) #layout-sidebar { margin-left: 4px; }
+  html body:not(.task-login):not(.task-logout) #layout-list .header, html body:not(.task-login):not(.task-logout) #layout-content .header { border-bottom: 1px solid #eef2f4 !important; }
+}
