@@ -99,6 +99,7 @@ e)
   echo "== e: remove installer, enable_installer = false"
   rm -rf $RC/installer
   [ -L $RC/public_html/installer ] && rm $RC/public_html/installer
+  rm -f $RC/public_html/installer.php
   bak $C
   sed -i -e "s/\(\$config\['enable_installer'\].* = \)true/\1false/" $C
   grep enable_installer $C
