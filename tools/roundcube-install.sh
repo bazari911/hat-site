@@ -156,6 +156,14 @@ EOCONFIG
     echo "FAIL: compose config invalid, restoring"; cp -a $O.bak $O; exit 1; fi
   ;;
 
+theme)
+  echo "== theme: update hat_theme from $TPL/hat_theme + restart php-fpm"
+  [ -d $RC/plugins/hat_theme ] && cp -a $RC/plugins/hat_theme /root/hat_theme.bak.$(date +%Y%m%d-%H%M%S) && echo "backup: /root/hat_theme.bak.*"
+  cp -r $TPL/hat_theme/. $RC/plugins/hat_theme/
+  ls -l $RC/plugins/hat_theme
+  docker compose restart php-fpm-mailcow
+  ;;
+
 restart)
   echo "== restart mailcow (webmail down for 1-2 minutes)"
   docker compose down && docker compose up -d
@@ -166,5 +174,5 @@ mailboxes)
   sql mailcow -e "SELECT username, active FROM mailbox WHERE domain='kazxat.kz';"
   ;;
 
-*) echo "usage: $0 a|b|c|d|e|f|g|h|restart|mailboxes" ;;
+*) echo "usage: $0 a|b|c|d|e|f|g|h|theme|restart|mailboxes" ;;
 esac
