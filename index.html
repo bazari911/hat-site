@@ -174,6 +174,18 @@
   .btn-blue:hover{background:var(--blue-dark)}
   .btn-ghost{border:2px solid var(--blue);color:var(--blue-dark);margin-top:10px}
   .btn-ghost:hover{background:#eaf7fa}
+  .me{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .me-ava{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:22px;background:var(--blue);flex:none}
+  .me-txt{min-width:0}
+  .me-txt b{display:block;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .me-txt small{display:block;color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .me-link{display:flex;align-items:center;gap:10px;padding:9px 6px;border-radius:8px;font-size:15px;color:var(--blue-dark);font-weight:600}
+  .me-link:hover{background:#eaf7fa}
+  .me-link em{margin-left:auto;font-style:normal;background:var(--blue);color:#fff;border-radius:12px;padding:1px 9px;font-size:13px}
+  .me-link em:empty{display:none}
+  #loginUser .btn-ghost{margin-top:12px}
+  .btn-login.user{display:flex;align-items:center;gap:8px;max-width:240px}
+  .btn-login.user span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .addr{margin-top:14px;font-size:13px;text-align:center;color:var(--muted)}
   .addr b{color:var(--text)}
   .ad-side{height:400px;margin-top:20px}
@@ -243,7 +255,7 @@
     <aside class="left">
       <div class="card services">
         <div class="today" id="today"></div>
-        <a href="auth.html#login"><span class="ico">✉️</span>Почта</a>
+        <a href="https://mail.kazxat.kz/rc/" id="menuMail"><span class="ico">✉️</span>Почта</a>
         <a href="#news" id="menuNews"><span class="ico">📰</span>Новости</a>
         <a href="https://www.gismeteo.kz/weather-astana-5164/" id="menuWeather" target="_blank" rel="noopener"><span class="ico">🌤️</span>Погода</a>
         <a href="https://nationalbank.kz/ru/exchangerates/ezhednevnye-oficialnye-rynochnye-kursy-valyut" target="_blank" rel="noopener"><span class="ico">💱</span>Курсы валют</a>
@@ -301,11 +313,24 @@
     <!-- ПРАВАЯ КОЛОНКА: вход в почту + реклама -->
     <aside>
       <div class="card login" id="login">
-        <div class="mail-logo"><span>@</span>kazxat.kz</div>
-        <p>Казахстанская почта: адрес в зоне .kz, серверы в Казахстане</p>
-        <a class="btn btn-blue" id="mailLogin" href="#">Войти в почту</a>
-        <a class="btn btn-ghost" href="auth.html#register">Создать ящик</a>
-        <div class="addr">Ваш адрес: <b>имя@kazxat.kz</b></div>
+        <!-- не вошёл -->
+        <div id="loginGuest">
+          <div class="mail-logo"><span>@</span>kazxat.kz</div>
+          <p>Казахстанская почта: адрес в зоне .kz, серверы в Казахстане</p>
+          <a class="btn btn-blue" id="mailLogin" href="https://mail.kazxat.kz/rc/">Войти в почту</a>
+          <a class="btn btn-ghost" href="auth.html#register">Создать ящик</a>
+          <div class="addr">Ваш адрес: <b>имя@kazxat.kz</b></div>
+        </div>
+        <!-- вошёл (как на Mail.ru) -->
+        <div id="loginUser" hidden>
+          <div class="me">
+            <div class="me-ava" id="meAva"></div>
+            <div class="me-txt"><b id="meName" data-noi18n></b><small id="meMail" data-noi18n></small></div>
+          </div>
+          <a class="me-link" href="https://mail.kazxat.kz/rc/?_task=mail&amp;_mbox=INBOX"><span>📥</span>Входящие<em id="meUnread"></em></a>
+          <a class="me-link" href="https://mail.kazxat.kz/rc/?_task=mail&amp;_action=compose"><span>✏️</span>Написать письмо</a>
+          <a class="btn btn-ghost" href="auth.html#register">Создать почту</a>
+        </div>
       </div>
 
       <!-- КУРСЫ ВАЛЮТ (живые данные) + конвертер -->
@@ -338,9 +363,33 @@
 <script>
   /* ===== НАСТРОЙКИ ===== */
   // Адрес веб-почты mailcow (поменяй, если почта висит на другом поддомене)
-  // Страница входа/регистрации (лежит рядом с index.html)
-  document.getElementById("mailLogin").href = "auth.html#login";
-  document.getElementById("topLogin").href  = "auth.html#login";
+  /* ===== ПОЧТА: вход и «уже вошёл», как на Mail.ru ===== */
+  const MAIL_URL = "https://mail.kazxat.kz/rc/";
+  document.getElementById("topLogin").href = MAIL_URL;
+  async function checkMail(){
+    try{
+      // Почта отвечает, только если человек в ней вошёл; иначе запрос не пройдёт
+      const r = await fetch(MAIL_URL+"?_task=mail&_action=plugin.hat_status", {credentials:"include", cache:"no-store"});
+      const d = await r.json();
+      if(!d.user) throw 0;
+      const name = d.user.split("@")[0];
+      document.getElementById("loginGuest").hidden = true;
+      document.getElementById("loginUser").hidden = false;
+      document.getElementById("meName").textContent = name;
+      document.getElementById("meMail").textContent = d.user;
+      document.getElementById("meAva").textContent = name.charAt(0).toUpperCase();
+      document.getElementById("meUnread").textContent = d.unread > 0 ? d.unread : "";
+      const top = document.getElementById("topLogin");
+      top.classList.add("user");
+      top.innerHTML = '✉️ <span data-noi18n></span>';
+      top.querySelector("span").textContent = d.unread > 0 ? `${d.user} · ${d.unread}` : d.user;
+    }catch(e){
+      document.getElementById("loginGuest").hidden = false;
+      document.getElementById("loginUser").hidden = true;
+    }
+  }
+  checkMail();
+  setInterval(checkMail, 2*60*1000);
 
   /* ===== ЛОГОТИП: жёлтая «собачка» @ с лучами солнца ===== */
   document.querySelectorAll(".logo-mark").forEach(svg=>{

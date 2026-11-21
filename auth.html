@@ -219,7 +219,7 @@
           <div class="err-box" id="r1-hint"></div>
           <button class="btn btn-blue">Далее</button>
         </form>
-        <div class="links"><span></span><a href="#login">У меня уже есть почта</a></div>
+        <div class="links"><span></span><a href="https://mail.kazxat.kz/rc/">У меня уже есть почта</a></div>
       </div>
 
       <!-- ВИД 4: РЕГИСТРАЦИЯ, шаг 2 — адрес и пароль -->
@@ -274,13 +274,13 @@
         <h2>Почта создана!</h2>
         <div class="sub">Ваш новый адрес:</div>
         <div class="addr" id="d-addr"></div>
-        <a class="btn btn-blue" id="d-go" href="mail.html">Перейти в почту</a>
+        <a class="btn btn-blue" id="d-go" href="https://mail.kazxat.kz/rc/">Перейти в почту</a>
         <a class="btn btn-ghost" href="index.html">На главную</a>
       </div>
 
       <!-- ВИД 7: ВОССТАНОВЛЕНИЕ ПАРОЛЯ -->
       <div class="view" id="v-restore">
-        <button class="back" onclick="go('login')">← Ко входу</button>
+        <a class="back" href="https://mail.kazxat.kz/rc/">← Ко входу</a>
         <h2>Восстановление доступа</h2>
         <div class="sub">Укажите адрес почты и номер телефона, привязанный к ящику</div>
         <div class="notice info" id="rs-notice"></div>
@@ -336,8 +336,11 @@
     const a=e.target.closest('a[href^="#"]'); if(!a||a.getAttribute("href").length<2) return;
     e.preventDefault(); go(a.getAttribute("href").slice(1));
   });
+  // Вход теперь в настоящей почте (Roundcube); здесь остаются регистрация и восстановление
+  const MAIL_URL = "https://mail.kazxat.kz/rc/";
   function show(v){
-    v = v || (location.hash||"#login").slice(1);
+    v = v || (location.hash||"#register").slice(1);
+    if(v==="login" || v==="password"){ location.replace(MAIL_URL); return; }
     const el=$("v-"+v) ? v : "login";
     document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+el));
     document.title = {register:"Регистрация",register2:"Регистрация",register3:"Регистрация",done:"Почта создана",restore:"Восстановление доступа",password:"Вход"}[el]
@@ -386,7 +389,7 @@
     if(!$("p-pass").value){ n.textContent="Введите пароль"; n.className="notice err on"; return; }
     if(DEMO){ // демо: пускаем в ящик с любым паролем
       try{ sessionStorage.setItem("hatUser",$("p-email").textContent); }catch(e){}
-      location.href="mail.html"; return;
+      location.href=MAIL_URL; return;
     }
     // TODO: отправка на сервер авторизации
   };
