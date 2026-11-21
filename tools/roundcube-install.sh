@@ -164,6 +164,20 @@ theme)
   docker compose restart php-fpm-mailcow
   ;;
 
+pwinfo)
+  echo "== pwinfo: read-only facts for the password plugin (no secrets printed)"
+  echo "HTTP_PORT=${HTTP_PORT} HTTP_BIND=${HTTP_BIND} HTTP_REDIRECT=${HTTP_REDIRECT:-n} IPV4_NETWORK=${IPV4_NETWORK}"
+  echo "API_KEY in mailcow.conf: $([ -n "${API_KEY:-}" ] && echo set || echo empty); API_ALLOW_FROM=${API_ALLOW_FROM:-}"
+  sql mailcow -e "SHOW COLUMNS FROM api;" | cut -f1 | tr '\n' ' '; echo
+  sql mailcow -e "SELECT access, allow_from, skip_ip_check, active, LENGTH(api_key) AS keylen FROM api;" || true
+  echo "php-fpm IP: $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}' $PHP)"
+  grep -n "plugins'\]" $C
+  ls -l $RC/plugins/password/drivers/mailcow.php $RC/plugins/password/config.inc.php.dist $RC/plugins/password/config.inc.php 2>&1 || true
+  for U in http://nginx:${HTTP_PORT}/api/v1/get/status/version http://nginx/api/v1/get/status/version; do
+    echo "$U -> $(docker exec $PHP curl -s -o /dev/null -w '%{http_code} %{redirect_url}' $U 2>&1 || echo curl-failed)"
+  done
+  ;;
+
 restart)
   echo "== restart mailcow (webmail down for 1-2 minutes)"
   docker compose down && docker compose up -d
@@ -174,5 +188,5 @@ mailboxes)
   sql mailcow -e "SELECT username, active FROM mailbox WHERE domain='kazxat.kz';"
   ;;
 
-*) echo "usage: $0 a|b|c|d|e|f|g|h|theme|restart|mailboxes" ;;
+*) echo "usage: $0 a|b|c|d|e|f|g|h|theme|pwinfo|restart|mailboxes" ;;
 esac
