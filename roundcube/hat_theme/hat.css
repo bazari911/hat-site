@@ -1,70 +1,119 @@
-/* ===== Хат — фирменные цвета поверх темы Elastic =====
-   голубой #00AFCA, тёмно-голубой #0089a0, глубокий #06566a, золото #FEC50C */
+/* =====================================================================
+   Хат — оформление Roundcube (тема Elastic) в стиле почты Mail.ru
+   голубой #00AFCA, тёмно-голубой #0089a0, глубокий #06566a, золото #FEC50C
+   ===================================================================== */
 
-/* --- кнопки и ссылки --- */
+/* --- общие акценты --- */
 .btn-primary, .btn.btn-primary, .button.mainaction, button.mainaction, input.mainaction {
   background-color: #00AFCA !important; border-color: #00AFCA !important; color: #fff !important;
 }
-.btn-primary:hover, .btn.btn-primary:hover, .button.mainaction:hover {
-  background-color: #0089a0 !important; border-color: #0089a0 !important;
-}
+.btn-primary:hover, .btn.btn-primary:hover, .button.mainaction:hover { background-color: #0089a0 !important; border-color: #0089a0 !important; }
 a, a:hover { color: #0089a0; }
 .form-control:focus, .custom-select:focus, input:focus, textarea:focus, select:focus {
-  border-color: #00AFCA !important; box-shadow: 0 0 0 .2rem rgba(0,175,202,.2) !important;
+  border-color: #00AFCA !important; box-shadow: 0 0 0 .2rem rgba(0,175,202,.18) !important;
 }
 input[type=checkbox], input[type=radio] { accent-color: #00AFCA; }
-.custom-switch .custom-control-input:checked ~ .custom-control-label::before {
-  background-color: #00AFCA !important; border-color: #00AFCA !important;
-}
-
-/* --- левое меню (тёмная полоса) --- */
-#layout-menu { background: linear-gradient(180deg, #06566a 0%, #0089a0 100%) !important; }
-#layout-menu a, #layout-menu .menu a { color: #e6f7fb !important; }
-#layout-menu a:hover, #layout-menu .menu a:hover { background-color: rgba(255,255,255,.12) !important; color: #fff !important; }
-#layout-menu a.selected, #layout-menu .menu a.selected { background-color: rgba(255,255,255,.18) !important; color: #FEC50C !important; }
-#layout-menu a.compose, #layout-menu .compose {
-  background-color: #FEC50C !important; color: #06566a !important; font-weight: 700;
-}
-#layout-menu a.compose:hover { background-color: #d9a400 !important; }
-/* логотип: в узкой полосе меню показываем только золотую @ с лучами */
-#layout-menu .popover-header { background: transparent !important; padding: 10px 0 !important; display: flex; justify-content: center; }
-#layout-menu #logo {
-  width: 52px !important; height: 52px !important; max-width: none !important; max-height: none !important;
-  object-fit: cover; object-position: 0 50%; margin: 0 auto;
-}
-/* нижние кнопки меню (тёмный режим, о программе, выход) — в тон меню */
-#layout-menu .special-buttons { background: transparent !important; border-top: 1px solid rgba(255,255,255,.15); }
-#layout-menu .special-buttons a { color: #e6f7fb !important; }
-
-/* --- папки и списки --- */
-.listing li.selected, .listing li.selected > a,
-.listing tr.selected, .listing tr.selected td, table.records-table tr.selected td {
-  background-color: #e3f6fa !important; color: #06566a !important;
-}
-.listing li:hover, .listing tr:hover td { background-color: #f3fafc; }
-.unreadcount, .listing li .unreadcount, #folderlist-content .unreadcount {
-  background-color: #00AFCA !important; color: #fff !important;
-}
-.listing li.selected .unreadcount { background-color: #06566a !important; }
-table.messagelist tr.unread td.subject a, table.messagelist tr.unread span.subject { color: #06566a; }
-table.messagelist tr.flagged td, table.messagelist tr.flagged td a { color: #c0392b; }
-
-/* --- вкладки и выделения --- */
-.nav-link.active, .tabsbar .selected, .formcontainer .nav-tabs .nav-link.active {
-  border-bottom-color: #00AFCA !important; color: #06566a !important;
-}
+.custom-switch .custom-control-input:checked ~ .custom-control-label::before { background-color: #00AFCA !important; border-color: #00AFCA !important; }
+.nav-link.active, .tabsbar .selected { border-bottom-color: #00AFCA !important; color: #06566a !important; }
 .progressbar .value, .quota-widget .bar { background-color: #00AFCA !important; }
+
+/* --- левая полоса с иконками: светлая, как в Mail.ru --- */
+html body #layout-menu { background: #eef3f6 !important; border-right: 1px solid #e1e8ec; }
+html body #layout-menu #taskmenu a, html body #layout-menu .special-buttons a { color: #41545e !important; border-radius: 12px; margin: 3px 6px; width: auto; }
+html body #layout-menu #taskmenu a:hover, html body #layout-menu .special-buttons a:hover { background: #e2ecf0 !important; }
+html body #layout-menu #taskmenu a.selected { background: #d6eef3 !important; color: #06566a !important; }
+html body #layout-menu .special-buttons { background: transparent !important; border-top: 1px solid #e1e8ec; }
+html body #layout-menu .popover-header { background: transparent !important; padding: 10px 0 !important; display: flex; justify-content: center; }
+html body #layout-menu #logo { width: 52px !important; height: 52px !important; max-width: none !important; max-height: none !important; object-fit: cover; object-position: 0 50%; margin: 0 auto; }
+html body #layout-menu #taskmenu a.compose { background: #FEC50C !important; color: #06566a !important; font-weight: 700; }
+
+/* --- там, где есть колонка папок: логотип и «Написать письмо» над папками --- */
+@media (min-width: 1024px) {
+  body.hat-has-sidebar #layout-menu .popover-header { display: none !important; }
+  body.hat-has-sidebar #layout-menu #taskmenu a.compose { display: none !important; }
+  body.hat-has-sidebar #layout-sidebar > .header {
+    background: #fff url(logo-dark.svg) 16px center / auto 44px no-repeat !important; border-bottom: 0 !important; height: 72px;
+  }
+  body.hat-has-sidebar #layout-sidebar > .header .header-title { visibility: hidden; }
+  .hat-compose {
+    display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 14px 12px; padding: 10px;
+    border-radius: 12px; background: #00AFCA; color: #fff !important; font-weight: 700; font-size: 15px;
+    text-decoration: none !important; box-shadow: 0 2px 8px rgba(0,175,202,.3);
+  }
+  .hat-compose:hover { background: #0089a0; color: #fff !important; }
+
+  /* список писем на всю ширину, без колонки предпросмотра */
+  body.task-mail.action-none #layout-content { display: none !important; }
+  body.task-mail.action-none #layout-list { flex: 1 1 auto !important; max-width: none !important; width: auto !important; }
+  body.task-mail.action-none #layout-list .column-resizer { display: none !important; }
+
+  /* в открытом письме — кнопка «Назад» к списку */
+  body.task-mail.action-show #layout-content > .header { position: relative; }
+  body.task-mail.action-show #layout-content > .header a.back-list-button {
+    display: inline-flex !important; flex-direction: row !important; align-items: center; gap: 6px; width: auto !important; height: 36px !important;
+    padding: 0 14px !important; color: #0089a0 !important; position: absolute !important; left: 12px; top: 50%; transform: translateY(-50%);
+    border-radius: 10px; background: #f1f9fb;
+  }
+  body.task-mail.action-show #layout-content > .header a.back-list-button:before {
+    display: inline-block !important; position: static !important; margin: 0 !important; font-size: 14px; line-height: 1; width: auto !important; height: auto !important;
+  }
+  body.task-mail.action-show #layout-content > .header a.back-list-button .inner { display: inline !important; position: static !important; font-size: 14px; line-height: 1; }
+}
+.hat-compose { display: none; }
+@media (min-width: 1024px) { body.hat-has-sidebar .hat-compose { display: flex; } }
+
+/* --- папки --- */
+html body #layout-sidebar { background: #fff; }
+html body #mailboxlist li { border: 0 !important; }
+html body #mailboxlist li a { border-radius: 10px; margin: 1px 8px; padding-top: 7px; padding-bottom: 7px; }
+html body #mailboxlist li.selected > a { background: #e8f4f7 !important; color: #06566a !important; font-weight: 600; }
+html body #mailboxlist .unreadcount { background: transparent !important; color: #06566a !important; font-weight: 700; font-size: 13px; }
+
+/* --- поиск и заголовок списка --- */
+html body #layout-list .searchbar { margin: 8px 16px 6px; border: 1px solid #dfe6ea; border-radius: 10px; background: #f5f8fa; }
+html body #layout-list .header .header-title { font-size: 18px; font-weight: 700; color: #1d2a30; }
+
+/* --- лента писем: одна строка — аватар, отправитель, тема, дата --- */
+html body #messagelist tbody tr td { border-bottom: 1px solid #eef2f4; }
+html body #messagelist tbody tr:hover td { background: #f5f9fb; }
+html body #messagelist tbody tr.selected td { background: #e8f4f7 !important; }
+html body #messagelist td.subject {
+  display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center; gap: 14px;
+  padding: 9px 10px 9px 22px !important; position: relative; height: auto !important; cursor: pointer;
+}
+html body #messagelist td.subject > span.fromto {
+  order: 1; flex: 0 0 210px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; color: #1d2a30;
+  margin: 0 !important; float: none !important;
+}
+html body #messagelist td.subject > span.fromto .adr, html body #messagelist td.subject > span.fromto .rcmContactAddress { color: inherit; }
+html body #messagelist td.subject > span.subject {
+  order: 2; flex: 1 1 0 !important; width: auto !important; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; margin: 0 !important;
+}
+html body #messagelist td.subject > span.subject a { color: #1d2a30; }
+html body #messagelist td.subject > span.subject .msgicon { display: none !important; }
+html body #messagelist td.subject > span.date { order: 3; flex: 0 0 auto; color: #8a99a3; font-size: 13px; margin: 0 !important; float: none !important; position: static !important; }
+html body #messagelist td.subject > span.size { display: none !important; }
+html body #messagelist tr.unread td.subject > span.fromto, html body #messagelist tr.unread td.subject > span.subject a { font-weight: 700; }
+html body #messagelist tr.unread td.subject::before {
+  content: ""; position: absolute; left: 8px; top: 50%; width: 7px; height: 7px; margin-top: -3px; border-radius: 50%; background: #00AFCA;
+}
+.hat-ava {
+  order: 0; flex: 0 0 34px; width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: 700; font-size: 14px;
+}
+
+/* --- текст письма обычным шрифтом, а не «пишущей машинкой» --- */
+#messagebody div.pre, #messagebody pre, .message-part div.pre {
+  font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important; font-size: 15px; line-height: 1.6; white-space: pre-wrap;
+}
 
 /* --- страница входа --- */
 body.task-login, body.task-login #layout, body.task-logout, body.task-logout #layout {
   background: linear-gradient(135deg, #06566a 0%, #0089a0 55%, #00AFCA 100%) !important;
 }
 body.task-login #layout-content, body.task-logout #layout-content { background: transparent !important; }
-body.task-login #logo, body.task-logout #logo { max-width: 280px; max-height: 100px; margin-bottom: 18px; }
-body.task-login #login-form, body.task-logout #login-form {
-  background: #fff; border-radius: 16px; padding: 28px 28px 20px; box-shadow: 0 12px 40px rgba(0,0,0,.18);
-}
+body.task-login #logo, body.task-logout #logo { max-width: 280px; max-height: 100px; margin-bottom: 18px; width: auto !important; height: auto !important; object-fit: contain; }
+body.task-login #login-form, body.task-logout #login-form { background: #fff; border-radius: 16px; padding: 28px 28px 20px; box-shadow: 0 12px 40px rgba(0,0,0,.18); }
 body.task-login #login-form .btn-primary { border-radius: 10px; font-weight: 700; letter-spacing: .3px; }
 body.task-login #login-footer, body.task-logout #login-footer { color: rgba(255,255,255,.85) !important; }
 body.task-login #login-footer a { color: #FEC50C !important; }
-body.task-login #message .alert, body.task-login #message .ui.alert { border-radius: 10px; }
