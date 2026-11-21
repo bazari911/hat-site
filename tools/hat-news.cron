@@ -1,0 +1,4 @@
+# Хат: сбор новостей каждые 15 минут. Скопировать в /etc/cron.d/hat-news
+SHELL=/bin/sh
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+*/15 * * * * root /usr/bin/python3 /opt/hat-site/tools/fetch_news.py > /var/log/hat-news.log 2>&1
