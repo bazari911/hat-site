@@ -221,6 +221,11 @@ def parse_feed(data, base):
                     img = m.get("url")
                     break
         if not img:
+            # нестандартный вариант Kazinform: <item><image><url>…</url></image>
+            iu = it.find("image/url")
+            if iu is not None and iu.text:
+                img = iu.text.strip()
+        if not img:
             img = first_img(desc_raw) or first_img(full)
         cat = it.find("category")
         items.append({

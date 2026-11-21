@@ -132,3 +132,16 @@ body.task-login #login-footer a { color: #FEC50C !important; }
 .hat-avatar-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; max-width: 420px; }
 .hat-avatar-pick { cursor: pointer; margin: 0; }
 .hat-avatar-hint { color: #6b7c85; font-size: 13px; line-height: 1.45; }
+/* стандартное поле выбора файла прячем полностью (тема Elastic его «украшает») */
+#hat-avatar-file, .hat-avatar-pick input[type=file], .hat-avatar-pick .custom-file, .hat-avatar-pick .custom-file-label {
+  display: none !important;
+}
+
+/* --- логотип «Хат» — ссылка на главную kazxat.kz --- */
+#layout-sidebar > .header { position: relative; }
+.hat-home { display: none; }
+@media (min-width: 1024px) {
+  body.hat-has-sidebar .hat-home { display: block; position: absolute; left: 8px; top: 12px; width: 170px; height: 48px; z-index: 2; border-radius: 10px; }
+  body.hat-has-sidebar .hat-home:hover { background: rgba(0,175,202,.06); }
+}
+.hat-logo-link { display: inline-block; line-height: 0; }

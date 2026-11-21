@@ -73,6 +73,31 @@
     });
   }
 
+  // Логотип «Хат» ведёт на главную kazxat.kz
+  var HOME = 'https://kazxat.kz/';
+  function addHomeLinks() {
+    var head = document.querySelector('#layout-sidebar > .header');
+    if (head && !head.querySelector('.hat-home')) {
+      var a = document.createElement('a');
+      a.className = 'hat-home';
+      a.href = HOME;
+      a.title = 'Хат — на главную';
+      a.setAttribute('aria-label', 'Хат — на главную');
+      head.insertBefore(a, head.firstChild);
+    }
+    var logos = document.querySelectorAll('#logo');
+    for (var i = 0; i < logos.length; i++) {
+      var img = logos[i];
+      if (img.closest('a')) continue;
+      var link = document.createElement('a');
+      link.href = HOME;
+      link.title = 'Хат — на главную';
+      link.className = 'hat-logo-link';
+      img.parentNode.insertBefore(link, img);
+      link.appendChild(img);
+    }
+  }
+
   function addCompose() {
     var sidebar = document.getElementById('layout-sidebar');
     if (!sidebar || document.querySelector('.hat-compose')) return;
@@ -91,6 +116,7 @@
   function init() {
     if (done) return; done = true;
     if (document.getElementById('layout-sidebar')) document.body.classList.add('hat-has-sidebar');
+    addHomeLinks();
     addCompose();
     avatarSettings();
 

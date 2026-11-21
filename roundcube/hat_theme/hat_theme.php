@@ -148,7 +148,7 @@ class hat_theme extends rcube_plugin
             . ($cur ? '<img src="' . rcube::Q($cur) . '" alt="">' : '<span>' . $letter . '</span>')
             . '</div>'
             . '<div class="hat-avatar-actions">'
-            . '<label class="btn btn-primary hat-avatar-pick">Выбрать фото'
+            . '<label for="hat-avatar-file" class="btn btn-primary hat-avatar-pick">Выбрать фото'
             . '<input type="file" id="hat-avatar-file" accept="image/jpeg,image/png,image/webp" hidden></label> '
             . '<button type="button" class="btn btn-secondary" id="hat-avatar-remove"' . ($cur ? '' : ' style="display:none"') . '>Удалить фото</button>'
             . '<input type="hidden" name="_hat_avatar" id="hat-avatar-data" value="">'
