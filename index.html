@@ -145,7 +145,16 @@
   .news .body{padding:12px 14px 14px}
   .news h4{font-size:15px;line-height:1.3;margin:6px 0}
   .news p{font-size:13px;color:var(--muted)}
-  .pic{display:flex;align-items:flex-end;padding:10px;color:#fff;font-size:12px;font-weight:600}
+  .pic{display:flex;align-items:flex-end;padding:10px;color:#fff;font-size:12px;font-weight:600;position:relative;overflow:hidden;background-size:cover;background-position:center}
+  .pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .pic .src-badge{position:relative;background:rgba(0,0,0,.45);padding:3px 8px;border-radius:6px}
+  .more{display:block;margin:18px auto 0;border:1.5px solid var(--blue);background:#fff;color:var(--blue-dark);font-weight:700;padding:10px 26px;border-radius:10px;cursor:pointer;font-size:14px}
+  .more:hover{background:#eaf7fa}
+  .news-status{font-size:12px;color:var(--muted);margin:-6px 0 12px}
+  .news-status .live{display:inline-block;width:8px;height:8px;border-radius:50%;background:#1e9e55;margin-right:6px;vertical-align:1px;animation:blink 2s infinite}
+  @keyframes blink{50%{opacity:.3}}
+  .popular li a:hover{color:var(--blue-dark)}
+  .popular li small{display:block;font-size:11px;color:var(--muted);margin-top:2px}
   .ad-inline{grid-column:1/-1;height:120px}
   .source{font-size:12px;color:var(--muted);margin-top:14px;text-align:right}
   .source a{color:var(--blue-dark);text-decoration:underline}
@@ -277,8 +286,10 @@
       <div class="tabs" id="tabs">
         <button class="on" data-src="all">Все источники</button>
       </div>
+      <div class="news-status" id="newsStatus"></div>
       <div id="lead"></div>
       <div class="grid" id="grid"></div>
+      <button class="more" id="moreBtn" style="display:none">Показать ещё новости</button>
       <div class="source" id="srcList"></div>
     </main>
 
@@ -304,7 +315,7 @@
       <div class="ad ad-side"><b>Рекламное место</b>Баннер 300×400</div>
 
       <div class="card popular">
-        <h2 class="sec">Популярное</h2>
+        <h2 class="sec">Последнее по источникам</h2>
         <ol id="popular"></ol>
       </div>
     </aside>
@@ -365,64 +376,118 @@
   Object.keys(SOURCES).forEach(k=>{const b=document.createElement("button");b.dataset.src=k;b.textContent=k;tabsEl.appendChild(b);});
   document.getElementById("srcList").innerHTML="Новости: "+Object.entries(SOURCES).map(([k,v])=>
     `<a href="${v.link}" target="_blank" rel="noopener">${k}</a>`).join(", ")+". По клику статья открывается на сайте источника.";
-  const NEWS = [
-    {src:"Kazinform",         tag:"Казахстан", title:"Здесь будет главная новость дня", text:"Короткий анонс в две-три строки. Полный текст открывается на сайте источника.", time:"5 мин назад"},
-    {src:"Tengrinews",        tag:"Общество",  title:"Заголовок новости из раздела «Общество»", text:"Анонс новости в одну-две строки.", time:"12 мин назад"},
-    {src:"Kapital.kz",        tag:"Экономика", title:"Заголовок деловой новости", text:"Анонс новости в одну-две строки.", time:"18 мин назад"},
-    {src:"24KZ",              tag:"Казахстан", title:"Заголовок новости телеканала", text:"Анонс новости в одну-две строки.", time:"25 мин назад"},
-    {src:"Atameken Business", tag:"Бизнес",    title:"Заголовок новости для предпринимателей", text:"Анонс новости в одну-две строки.", time:"31 мин назад"},
-    {src:"Informburo",        tag:"Мир",       title:"Заголовок международной новости", text:"Анонс новости в одну-две строки.", time:"40 мин назад"},
-    {src:"Bizmedia",          tag:"Финансы",   title:"Заголовок финансовой новости", text:"Анонс новости в одну-две строки.", time:"48 мин назад"},
-    {src:"Tengrinews",        tag:"Спорт",     title:"Заголовок спортивной новости", text:"Анонс новости в одну-две строки.", time:"1 ч назад"},
-    {src:"Kazinform",         tag:"Культура",  title:"Заголовок новости о культуре", text:"Анонс новости в одну-две строки.", time:"1 ч назад"},
-    {src:"Kapital.kz",        tag:"Финансы",   title:"Ещё один заголовок о финансах", text:"Анонс новости в одну-две строки.", time:"1 ч назад"},
-    {src:"Informburo",        tag:"Казахстан", title:"Заголовок новости из регионов", text:"Анонс новости в одну-две строки.", time:"2 ч назад"},
-    {src:"24KZ",              tag:"Технологии",title:"Заголовок новости о технологиях", text:"Анонс новости в одну-две строки.", time:"2 ч назад"},
-    {src:"Atameken Business", tag:"Экономика", title:"Ещё один заголовок об экономике", text:"Анонс новости в одну-две строки.", time:"3 ч назад"},
+  // Демо-новости: показываются, только если файл с живыми новостями недоступен
+  // (например, когда index.html открыт с компьютера, а не с сервера).
+  const ago = m => new Date(Date.now()-m*60000).toISOString();
+  const DEMO_NEWS = [
+    {src:"Kazinform",         tag:"Казахстан", title:"Здесь будет главная новость дня", text:"Короткий анонс в две-три строки. Полный текст открывается на сайте источника.", date:ago(5)},
+    {src:"Tengrinews",        tag:"Общество",  title:"Заголовок новости из раздела «Общество»", text:"Анонс новости в одну-две строки.", date:ago(12)},
+    {src:"Kapital.kz",        tag:"Экономика", title:"Заголовок деловой новости", text:"Анонс новости в одну-две строки.", date:ago(18)},
+    {src:"24KZ",              tag:"Казахстан", title:"Заголовок новости телеканала", text:"Анонс новости в одну-две строки.", date:ago(25)},
+    {src:"Atameken Business", tag:"Бизнес",    title:"Заголовок новости для предпринимателей", text:"Анонс новости в одну-две строки.", date:ago(31)},
+    {src:"Informburo",        tag:"Мир",       title:"Заголовок международной новости", text:"Анонс новости в одну-две строки.", date:ago(40)},
+    {src:"Bizmedia",          tag:"Финансы",   title:"Заголовок финансовой новости", text:"Анонс новости в одну-две строки.", date:ago(48)},
   ];
+  let NEWS = [], LIVE = false, UPDATED = null;
 
-  // Цветные заглушки вместо фото (потом заменятся картинками из RSS)
   const COLORS = [["#00AFCA","#06566a"],["#FEC50C","#d97a00"],["#2bb3a3","#0b5e6b"],["#5b8def","#203d8a"],["#e2655a","#7a1f2b"],["#8a6be0","#3a2a7a"],["#3fbf6f","#1b5e3a"]];
-  const pic = (i,label)=>`<div class="pic" style="background:linear-gradient(135deg,${COLORS[i%7][0]},${COLORS[i%7][1]})">${label}</div>`;
-  const srcLabel = n => `<span class="src" style="color:${SOURCES[n.src].color}">${n.src}</span>`;
+  const esc = s => String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const safeUrl = u => /^https?:\/\//i.test(u||"") ? esc(u) : "#";
+  const srcInfo = n => SOURCES[n.src] || {link:"#",color:"#6b7c85"};
+  const srcLabel = n => `<span class="src" style="color:${srcInfo(n).color}">${esc(n.src)}</span>`;
+  function pic(n,i){
+    const g=COLORS[i%7];
+    const img = n.img ? `<img src="${safeUrl(n.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : "";
+    return `<div class="pic" style="background:linear-gradient(135deg,${g[0]},${g[1]})">${img}<span class="src-badge">${esc(n.src)}</span></div>`;
+  }
+  function timeAgo(iso){
+    const d=new Date(iso); if(isNaN(d)) return "";
+    const m=Math.round((Date.now()-d)/60000);
+    if(m<1) return "только что";
+    if(m<60) return m+" мин назад";
+    const h=Math.floor(m/60);
+    if(h<24) return h+" ч назад";
+    return d.toLocaleDateString("ru-RU",{day:"numeric",month:"short"})+", "+d.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
+  }
 
-  let curSrc="all", curQuery="";
-  function renderNews(){
+  const PAGE=12;
+  let curSrc="all", curQuery="", shown=PAGE;
+  function filtered(){
     let list = curSrc==="all" ? NEWS : NEWS.filter(n=>n.src===curSrc);
-    if(curQuery){
-      const q=curQuery.toLowerCase();
-      list=list.filter(n=>(n.title+" "+n.text+" "+n.tag).toLowerCase().includes(q));
-    }
-    const lead=document.getElementById("lead"), grid=document.getElementById("grid");
+    if(curQuery){ const q=curQuery.toLowerCase(); list=list.filter(n=>(n.title+" "+(n.text||"")+" "+(n.tag||"")).toLowerCase().includes(q)); }
+    return list;
+  }
+  function card(n,i,cls){
+    const href=safeUrl(n.link||srcInfo(n).link);
+    const tag = n.tag ? `<span class="tag">${esc(n.tag)}</span>` : "";
+    if(cls==="lead") return `<a class="card lead" href="${href}" target="_blank" rel="noopener">${pic(n,i)}
+        <div class="txt">${tag}<h3>${esc(n.title)}</h3><p>${esc(n.text)}</p><div class="meta">${srcLabel(n)} · ${timeAgo(n.date)}</div></div></a>`;
+    return `<a class="card news" href="${href}" target="_blank" rel="noopener">${pic(n,i)}
+        <div class="body">${tag}<h4>${esc(n.title)}</h4><p>${esc(n.text)}</p><div class="meta">${srcLabel(n)} · ${timeAgo(n.date)}</div></div></a>`;
+  }
+  function renderNews(){
+    const list=filtered();
+    const lead=document.getElementById("lead"), grid=document.getElementById("grid"), more=document.getElementById("moreBtn");
     if(!list.length){
-      lead.innerHTML=`<div class="card" style="padding:24px">По запросу «${curQuery.replace(/</g,"&lt;")}» новостей не найдено.</div>`;
-      grid.innerHTML=""; return;
+      lead.innerHTML=`<div class="card" style="padding:24px">${curQuery?`По запросу «${esc(curQuery)}» новостей не найдено.`:"Новостей пока нет."}</div>`;
+      grid.innerHTML=""; more.style.display="none"; return;
     }
-    const [first, ...rest] = list;
-    lead.innerHTML = `
-      <a class="card lead" href="${SOURCES[first.src].link}" target="_blank" rel="noopener">
-        ${pic(0,"Фото новости")}
-        <div class="txt"><span class="tag">${first.tag}</span><h3>${first.title}</h3><p>${first.text}</p><div class="meta">${srcLabel(first)} · ${first.time}</div></div>
-      </a>`;
-    let html = "";
-    rest.forEach((n,i)=>{
-      html += `<a class="card news" href="${SOURCES[n.src].link}" target="_blank" rel="noopener">
-        ${pic(i+1,"Фото")}
-        <div class="body"><span class="tag">${n.tag}</span><h4>${n.title}</h4><p>${n.text}</p><div class="meta">${srcLabel(n)} · ${n.time}</div></div>
-      </a>`;
-      if(i===2) html += `<div class="ad ad-inline"><b>Рекламное место</b>Баннер внутри ленты 728×120</div>`;
+    // главная новость — самая свежая с картинкой (если есть)
+    const li = Math.max(0, list.slice(0,6).findIndex(n=>n.img));
+    const first=list[li], rest=list.filter((_,i)=>i!==li);
+    lead.innerHTML = card(first,0,"lead");
+    let html="";
+    rest.slice(0,shown).forEach((n,i)=>{
+      html+=card(n,i+1);
+      if(i===2) html+=`<div class="ad ad-inline"><b>Рекламное место</b>Баннер внутри ленты 728×120</div>`;
     });
-    grid.innerHTML = html;
+    grid.innerHTML=html;
+    more.style.display = rest.length>shown ? "block" : "none";
+  }
+  document.getElementById("moreBtn").onclick=()=>{ shown+=PAGE; renderNews(); };
+
+  function renderTabs(){
+    const have = LIVE ? new Set(NEWS.map(n=>n.src)) : new Set(Object.keys(SOURCES));
+    document.querySelectorAll("#tabs button[data-src]").forEach(b=>{
+      if(b.dataset.src!=="all") b.style.display = have.has(b.dataset.src) ? "" : "none";
+    });
   }
   document.getElementById("tabs").addEventListener("click",e=>{
     if(e.target.tagName!=="BUTTON") return;
     document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b===e.target));
-    curSrc=e.target.dataset.src; renderNews();
+    curSrc=e.target.dataset.src; shown=PAGE; renderNews();
   });
-  renderNews();
 
-  document.getElementById("popular").innerHTML =
-    NEWS.slice(0,5).map(n=>`<li><a href="${SOURCES[n.src].link}" target="_blank" rel="noopener">${n.title}</a></li>`).join("");
+  function renderPopular(){
+    // по одной самой свежей новости от каждого источника
+    const seen=new Set(), list=[];
+    NEWS.forEach(n=>{ if(!seen.has(n.src)){ seen.add(n.src); list.push(n); } });
+    document.getElementById("popular").innerHTML = list.slice(0,7).map(n=>
+      `<li><a href="${safeUrl(n.link||srcInfo(n).link)}" target="_blank" rel="noopener">${esc(n.title)}<small>${esc(n.src)} · ${timeAgo(n.date)}</small></a></li>`).join("");
+  }
+  function renderStatus(){
+    const st=document.getElementById("newsStatus");
+    st.innerHTML = LIVE
+      ? `<span class="live"></span>Новости обновляются автоматически · обновлено ${timeAgo(UPDATED)}`
+      : `Демо-новости: живая лента появится, когда сайт работает на сервере`;
+  }
+  function renderAll(){ renderTabs(); renderNews(); renderPopular(); renderStatus(); }
+
+  async function loadNews(){
+    try{
+      const r=await fetch("data/news.json?t="+Date.now(),{cache:"no-store"});
+      if(!r.ok) throw 0;
+      const d=await r.json();
+      if(!d.items || !d.items.length) throw 0;
+      NEWS=d.items; LIVE=true; UPDATED=d.updated;
+    }catch(e){
+      if(!LIVE){ NEWS=DEMO_NEWS; }
+    }
+    renderAll();
+  }
+  loadNews();
+  setInterval(loadNews, 5*60*1000);   // раз в 5 минут подтягиваем свежий файл
+  setInterval(()=>{ renderStatus(); }, 60*1000);
 
   /* ===== ПОИСК: «Интернет» (Google) или «Новости» (по ленте сайта) ===== */
   let sMode="web";
@@ -438,7 +503,7 @@
     if(sMode==="web"){
       if(q) window.open("https://www.google.com/search?q="+encodeURIComponent(q),"_blank","noopener");
     }else{
-      curQuery=q; renderNews();
+      curQuery=q; shown=PAGE; renderNews();
       document.getElementById("news").scrollIntoView({behavior:"smooth"});
     }
   });
