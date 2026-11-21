@@ -225,8 +225,8 @@
   </div>
   <nav>
     <div class="wrap">
-      <a href="#" class="on">Главное</a><a href="#">Казахстан</a><a href="#">Мир</a><a href="#">Экономика</a>
-      <a href="#">Общество</a><a href="#">Спорт</a><a href="#">Культура</a><a href="#">Технологии</a>
+      <a href="#news" class="on" data-cat="">Главное</a><a href="#news" data-cat="Казахстан">Казахстан</a><a href="#news" data-cat="Мир">Мир</a><a href="#news" data-cat="Экономика">Экономика</a>
+      <a href="#news" data-cat="Общество">Общество</a><a href="#news" data-cat="Спорт">Спорт</a><a href="#news" data-cat="Культура">Культура</a><a href="#news" data-cat="Технологии">Технологии</a>
     </div>
   </nav>
 </header>
@@ -414,9 +414,24 @@
   }
 
   const PAGE=12;
-  let curSrc="all", curQuery="", shown=PAGE;
+  let curSrc="all", curQuery="", curCat="", shown=PAGE;
+  // Разделы верхнего меню: новость попадает в раздел по рубрике источника или по словам в заголовке
+  const CATS={
+    "Казахстан": /казахстан|регион|астан|алмат|шымкент|аким|область|қазақстан/i,
+    "Мир":       /в мире|мирово|мировых|междунар|зарубеж|сша|китай|росси|европ|украин|иран|израил/i,
+    "Экономика": /эконом|бизнес|финанс|банк|тенге|нефт|налог|инвест|рынок|цены|бюджет|инфляц/i,
+    "Общество":  /обществ|социал|образован|здравоохран|медицин|школ|пенси|происшеств|закон|право/i,
+    "Спорт":     /спорт|футбол|хоккей|бокс|олимп|теннис|ufc|чемпион|матч|турнир|сборн/i,
+    "Культура":  /культур|кино|фильм|музык|театр|концерт|выставк|искусств|литерат/i,
+    "Технологии":/технолог|цифров|\bit\b|интернет|искусственн|(^|[^а-яё])ии([^а-яё]|$)|смартфон|стартап|кибер|космос/i,
+  };
+  function inCat(n,cat){
+    const re=CATS[cat]; if(!re) return true;
+    return re.test(n.tag||"") || re.test(n.title||"");
+  }
   function filtered(){
     let list = curSrc==="all" ? NEWS : NEWS.filter(n=>n.src===curSrc);
+    if(curCat) list=list.filter(n=>inCat(n,curCat));
     if(curQuery){ const q=curQuery.toLowerCase(); list=list.filter(n=>(n.title+" "+(n.text||"")+" "+(n.tag||"")).toLowerCase().includes(q)); }
     return list;
   }
@@ -432,7 +447,7 @@
     const list=filtered();
     const lead=document.getElementById("lead"), grid=document.getElementById("grid"), more=document.getElementById("moreBtn");
     if(!list.length){
-      lead.innerHTML=`<div class="card" style="padding:24px">${curQuery?`По запросу «${esc(curQuery)}» новостей не найдено.`:"Новостей пока нет."}</div>`;
+      lead.innerHTML=`<div class="card" style="padding:24px">${curQuery?`По запросу «${esc(curQuery)}» новостей не найдено.`:curCat?`В разделе «${esc(curCat)}» сейчас нет свежих новостей.`:"Новостей пока нет."}</div>`;
       grid.innerHTML=""; more.style.display="none"; return;
     }
     // главная новость — самая свежая с картинкой (если есть)
@@ -455,6 +470,14 @@
       if(b.dataset.src!=="all") b.style.display = have.has(b.dataset.src) ? "" : "none";
     });
   }
+  document.querySelector("nav .wrap").addEventListener("click",e=>{
+    const a=e.target.closest("a[data-cat]"); if(!a) return;
+    e.preventDefault();
+    document.querySelectorAll("nav a").forEach(x=>x.classList.toggle("on",x===a));
+    curCat=a.dataset.cat; shown=PAGE; renderNews();
+    document.querySelector("#news h2.sec").textContent = curCat || "Главные новости";
+    document.getElementById("news").scrollIntoView({behavior:"smooth"});
+  });
   document.getElementById("tabs").addEventListener("click",e=>{
     if(e.target.tagName!=="BUTTON") return;
     document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b===e.target));
@@ -568,25 +591,36 @@
     if(saved && [...citySel.options].some(o=>o.value===saved)){ pickCity(saved); return; }
     pickCity(citySel.options[0].value); // пока определяем — Астана
     const services=[
-      ["https://get.geojs.io/v1/ip/geo.json", d=>[+d.latitude,+d.longitude,d.country_code]],
-      ["https://ipapi.co/json/",             d=>[+d.latitude,+d.longitude,d.country_code]],
+      ["https://get.geojs.io/v1/ip/geo.json", d=>[+d.latitude,+d.longitude,d.country_code,d.city]],
+      ["https://ipapi.co/json/",             d=>[+d.latitude,+d.longitude,d.country_code,d.city]],
     ];
     for(const [url,parse] of services){
       try{
         const r=await fetch(url,{cache:"no-store"}); if(!r.ok) continue;
-        const [la,lo,cc]=parse(await r.json());
+        const [la,lo,cc,ipCity]=parse(await r.json());
         if(!isFinite(la)||!isFinite(lo)) continue;
         if(cc && cc!=="KZ") return;              // не из Казахстана — оставляем Астану
         const n=nearestCity(la,lo);
-        if(n.dist<120) pickCity(n.opt.value);
+        let name;
+        if(n.dist<40){ pickCity(n.opt.value); name=n.opt.textContent; }
         else{
-          const o=new Option("📍 Моё местоположение",`${la.toFixed(2)},${lo.toFixed(2)}`);
+          name = await placeName(la,lo) || ipCity || "Моё местоположение";
+          const o=new Option("📍 "+name,`${la.toFixed(2)},${lo.toFixed(2)}`);
           citySel.add(o,0); pickCity(o.value);
         }
-        document.getElementById("wnote").textContent="📍 Город определён автоматически · Open-Meteo";
+        document.getElementById("wnote").textContent=`📍 ${name} — определено автоматически · Open-Meteo`;
         return;
       }catch(e){}
     }
+  }
+  // Название населённого пункта по координатам, на русском (бесплатный сервис BigDataCloud)
+  async function placeName(la,lo){
+    try{
+      const r=await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${la}&longitude=${lo}&localityLanguage=ru`);
+      if(!r.ok) return "";
+      const d=await r.json();
+      return d.city || d.locality || d.principalSubdivision || "";
+    }catch(e){ return ""; }
   }
   detectCity();
 
