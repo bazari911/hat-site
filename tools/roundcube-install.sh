@@ -234,6 +234,33 @@ netinfo)
   if grep -q "${CAND}\$" <(awk '/ipv4_address/{print $2}' docker-compose.yml); then echo "RESULT: .${CAND} is RESERVED in docker-compose.yml"; else echo "RESULT: .${CAND} is not reserved in docker-compose.yml"; fi
   ;;
 
+pinnginx)
+  echo "== pinnginx: fixed address .247 for nginx, ${MAILCOW_HOSTNAME} -> nginx inside php-fpm only"
+  O=docker-compose.override.yml
+  if grep -q 'ipv4_address' $O; then echo "already done"; else
+    B=$O.bak.$(date +%Y%m%d-%H%M%S); cp -a $O $B; echo "backup: $B"
+    sed -i '/^  nginx-mailcow:$/a\    networks:\n      mailcow-network:\n        ipv4_address: ${IPV4_NETWORK:-172.22.1}.247' $O
+    sed -i '/^  php-fpm-mailcow:$/a\    extra_hosts:\n      - "'"${MAILCOW_HOSTNAME}"':${IPV4_NETWORK:-172.22.1}.247"' $O
+    if ! docker compose config -q; then echo "FAIL: compose config invalid, restoring $B"; cp -a $B $O; exit 1; fi
+  fi
+  cat $O
+  docker compose config -q && echo "docker compose config OK"
+  echo "-- merged nginx network settings:"
+  docker compose config | awk '/^  nginx-mailcow:/{p=1;next} /^  [a-z]/{p=0} p' | grep -A5 '^    networks:'
+  echo "-- merged php-fpm extra_hosts:"
+  docker compose config | awk '/^  php-fpm-mailcow:/{p=1;next} /^  [a-z]/{p=0} p' | grep -A2 'extra_hosts'
+  echo "now run: restart, then pincheck"
+  ;;
+
+pincheck)
+  echo "== pincheck: read-only, after restart"
+  echo "nginx IP: $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}' $NG)"
+  echo "${MAILCOW_HOSTNAME} inside php-fpm: $(docker exec $PHP getent hosts ${MAILCOW_HOSTNAME})"
+  KEY=$(sql -N -s mailcow -e "SELECT api_key FROM api WHERE access='rw' AND active=1 LIMIT 1;")
+  echo "API with key, certificate VERIFIED: $(docker exec $PHP curl -s -o /dev/null -w 'HTTP %{http_code}, connected to %{remote_ip}, ssl_verify=%{ssl_verify_result}' -H "X-API-Key: $KEY" https://${MAILCOW_HOSTNAME}/api/v1/get/status/version 2>&1 || echo curl-failed)"
+  grep -h password_mailcow_api_host $RC/plugins/password/config.inc.php
+  ;;
+
 restart)
   echo "== restart mailcow (webmail down for 1-2 minutes)"
   docker compose down && docker compose up -d
@@ -244,5 +271,5 @@ mailboxes)
   sql mailcow -e "SELECT username, active FROM mailbox WHERE domain='kazxat.kz';"
   ;;
 
-*) echo "usage: $0 a|b|c|d|e|f|g|h|theme|pwinfo|password|apitest|netinfo|restart|mailboxes" ;;
+*) echo "usage: $0 a|b|c|d|e|f|g|h|theme|pwinfo|password|apitest|netinfo|pinnginx|pincheck|restart|mailboxes" ;;
 esac
