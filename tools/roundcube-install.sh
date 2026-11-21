@@ -106,7 +106,7 @@ e)
 
 f)
   echo "== f: composer update + audit"
-  cp -n $RC/composer.json-dist $RC/composer.json
+  [ -e $RC/composer.json ] || cp $RC/composer.json-dist $RC/composer.json
   docker exec -w /web/rc $PHP composer config --no-interaction allow-plugins.roundcube/plugin-installer true
   if ! docker exec -w /web/rc $PHP composer update --no-dev -o --no-interaction; then
     echo "retry after dump-autoload (known composer issue, see guide)"
