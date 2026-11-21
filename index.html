@@ -605,6 +605,8 @@
         const r=await fetch(url,{cache:"no-store"}); if(!r.ok) continue;
         const [la,lo,cc,ipCity]=parse(await r.json());
         if(!isFinite(la)||!isFinite(lo)) continue;
+        // Сервис знает только страну: без города и с координатами «центра Казахстана» (48, 68) — не угадываем
+        if(!ipCity || (Math.abs(la-48)<0.05 && Math.abs(lo-68)<0.05)) continue;
         if(cc && cc!=="KZ") return;              // не из Казахстана — оставляем Астану
         const n=nearestCity(la,lo);
         let name;
@@ -618,6 +620,7 @@
         return;
       }catch(e){}
     }
+    document.getElementById("wnote").textContent="Город не определился автоматически — нажмите «📍 Точнее»";
   }
   // Название населённого пункта по координатам, на русском (бесплатный сервис BigDataCloud)
   async function placeName(la,lo){
