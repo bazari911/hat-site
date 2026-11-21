@@ -54,7 +54,7 @@
         var tr = e.target.closest && e.target.closest('#messagelist tbody tr');
         if (!tr) return;
         if (e.target.closest('td.selection, td.flags, input, .threads, .flag') || e.ctrlKey || e.shiftKey || e.metaKey) return;
-        if (rcmail.message_list && rcmail.message_list.checkbox_selection) return; // режим «Выбрать»
+        if (document.querySelector('#messagelist.withselection')) return; // режим «Выбрать»
         var a = tr.querySelector('span.subject a');
         if (!a) return;
         e.preventDefault(); e.stopPropagation();
