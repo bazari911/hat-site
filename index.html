@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="lang.js"></script>
 <title>Хат — почта и новости Казахстана</title>
 <style>
   :root{
@@ -357,8 +358,8 @@
   /* ===== СЕГОДНЯ: дата и время по Казахстану ===== */
   function tick(){
     const d=new Date();
-    const time=d.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Almaty"});
-    const date=d.toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long",timeZone:"Asia/Almaty"});
+    const time=d.toLocaleTimeString((window.HAT_LOCALE||"ru-RU"),{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Almaty"});
+    const date=d.toLocaleDateString((window.HAT_LOCALE||"ru-RU"),{weekday:"long",day:"numeric",month:"long",timeZone:"Asia/Almaty"});
     document.getElementById("today").innerHTML=`<b>${time}</b>${date}`;
   }
   tick(); setInterval(tick,10000);
@@ -412,7 +413,7 @@
     if(m<60) return m+" мин назад";
     const h=Math.floor(m/60);
     if(h<24) return h+" ч назад";
-    return d.toLocaleDateString("ru-RU",{day:"numeric",month:"short"})+", "+d.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
+    return d.toLocaleDateString((window.HAT_LOCALE||"ru-RU"),{day:"numeric",month:"short"})+", "+d.toLocaleTimeString((window.HAT_LOCALE||"ru-RU"),{hour:"2-digit",minute:"2-digit"});
   }
 
   const PAGE=12;
@@ -444,9 +445,9 @@
     const href=safeUrl(n.link||srcInfo(n).link);
     const tag = n.tag ? `<span class="tag">${esc(n.tag)}</span>` : "";
     if(cls==="lead") return `<a class="card lead" href="${href}" target="_blank" rel="noopener">${pic(n,i)}
-        <div class="txt">${tag}<h3>${esc(n.title)}</h3><p>${esc(n.text)}</p><div class="meta">${srcLabel(n)} · ${timeAgo(n.date)}</div></div></a>`;
+        <div class="txt">${tag}<h3 data-noi18n>${esc(n.title)}</h3><p data-noi18n>${esc(n.text)}</p><div class="meta">${srcLabel(n)} · ${timeAgo(n.date)}</div></div></a>`;
     return `<a class="card news" href="${href}" target="_blank" rel="noopener">${pic(n,i)}
-        <div class="body">${tag}<h4>${esc(n.title)}</h4><p>${esc(n.text)}</p><div class="meta">${srcLabel(n)} · ${timeAgo(n.date)}</div></div></a>`;
+        <div class="body">${tag}<h4 data-noi18n>${esc(n.title)}</h4><p data-noi18n>${esc(n.text)}</p><div class="meta">${srcLabel(n)} · ${timeAgo(n.date)}</div></div></a>`;
   }
   function renderNews(){
     const list=filtered();
@@ -494,7 +495,7 @@
     const seen=new Set(), list=[];
     NEWS.forEach(n=>{ if(!seen.has(n.src)){ seen.add(n.src); list.push(n); } });
     document.getElementById("popular").innerHTML = list.slice(0,7).map(n=>
-      `<li><a href="${safeUrl(n.link||srcInfo(n).link)}" target="_blank" rel="noopener">${esc(n.title)}<small>${esc(n.src)} · ${timeAgo(n.date)}</small></a></li>`).join("");
+      `<li><a href="${safeUrl(n.link||srcInfo(n).link)}" target="_blank" rel="noopener"><span data-noi18n>${esc(n.title)}</span><small>${esc(n.src)} · ${timeAgo(n.date)}</small></a></li>`).join("");
   }
   function renderStatus(){
     const st=document.getElementById("newsStatus");
@@ -706,7 +707,7 @@
     const k=e.target.dataset && e.target.dataset.k; if(!k) return;
     selKey=k; renderCal();
     const dt=new Date(k+"T12:00"), h=yearHolidays(dt.getFullYear())[k];
-    const title=`${dt.getDate()} ${dt.toLocaleDateString("ru-RU",{month:"long"})}, ${WD[dt.getDay()]}`;
+    const title=`${dt.getDate()} ${dt.toLocaleDateString((window.HAT_LOCALE||"ru-RU"),{month:"long"})}, ${WD[dt.getDay()]}`;
     let txt;
     if(h && h.type==="hol") txt=`🎉 ${h.name}. Праздничный выходной день`;
     else if(h) txt=`🔁 ${h.name}`;
@@ -748,7 +749,7 @@
     const out={}; Object.keys(CUR).forEach(c=>out[c]={v:d.rates.KZT/d.rates[c],ch:0,idx:""});
     return {rates:out,date:""};
   }
-  const fmt=v=>v.toLocaleString("ru-RU",{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmt=v=>v.toLocaleString((window.HAT_LOCALE||"ru-RU"),{minimumFractionDigits:2,maximumFractionDigits:2});
   async function loadRates(){
     let res=null, official=true;
     for(const u of [NBK_PROXY,NBK_DIRECT]){ try{ res=await fromNBK(u); break; }catch(e){} }

@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="lang.js"></script>
 <title>Входящие — Хат.Почта</title>
 <style>
   :root{
@@ -29,6 +30,9 @@
   .msearch span{opacity:.5}
   .msearch input{flex:1;border:none;outline:none;background:none;padding:11px 10px;font-size:14px}
   .top-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+  .lang{display:flex;gap:4px;font-size:13px}
+  .lang a{opacity:.75;padding:2px 4px}
+  .lang a.on{opacity:1;font-weight:700;border-bottom:2px solid var(--gold)}
   .top-right .ico-btn{background:rgba(255,255,255,.15);border:none;color:#fff;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:16px}
   .top-right .ico-btn:hover{background:rgba(255,255,255,.25)}
   .user{position:relative}
@@ -157,6 +161,7 @@
     <a href="index.html" class="logo"><svg class="logo-mark" viewBox="0 0 100 100"></svg><div>Хат<small>Почта</small></div></a>
     <label class="msearch"><span>🔍</span><input id="search" placeholder="Поиск по письмам"></label>
     <div class="top-right">
+      <div class="lang"><a href="#">ҚАЗ</a><a href="#">РУС</a></div>
       <button class="ico-btn" title="Главная" onclick="location.href='index.html'">🏠</button>
       <button class="ico-btn" title="Настройки" onclick="toast('Настройки появятся позже')">⚙️</button>
       <div class="user">
@@ -280,6 +285,7 @@
   });
 
   /* ===== ПОЛЕЗНОЕ ===== */
+  const T = window.HAT_T || (s=>s);
   const $=id=>document.getElementById(id);
   const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const color=s=>COLORS[[...s].reduce((a,c)=>a+c.charCodeAt(0),0)%COLORS.length];
@@ -287,11 +293,11 @@
   function fmtDate(d,full){
     const sameDay=d.toDateString()===today.toDateString();
     const y=new Date(today); y.setDate(y.getDate()-1);
-    const t=d.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
-    if(full) return d.toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"})+", "+t;
+    const t=d.toLocaleTimeString((window.HAT_LOCALE||"ru-RU"),{hour:"2-digit",minute:"2-digit"});
+    if(full) return d.toLocaleDateString((window.HAT_LOCALE||"ru-RU"),{day:"numeric",month:"long",year:"numeric"})+", "+t;
     if(sameDay) return t;
     if(d.toDateString()===y.toDateString()) return "вчера";
-    return d.toLocaleDateString("ru-RU",{day:"numeric",month:"short"});
+    return d.toLocaleDateString((window.HAT_LOCALE||"ru-RU"),{day:"numeric",month:"short"});
   }
   function toast(t){ const el=$("toast"); el.textContent=t; el.classList.add("on"); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove("on"),2200); }
   const EXT={pdf:"#d63b3b",docx:"#2c7be5",doc:"#2c7be5",xlsx:"#1e9e55",xls:"#1e9e55",jpg:"#8e44ad",png:"#8e44ad",zip:"#7f8c8d"};
@@ -344,8 +350,8 @@
         <input type="checkbox" class="chk" ${selected.has(m.id)?"checked":""}>
         <button class="star ${m.star?"on":""}" title="В избранное">★</button>
         <div class="ava" style="background:${color(who)}">${initial(m.from||"Ч")}</div>
-        <div class="from">${esc(who)}</div>
-        <div class="subj"><b>${esc(m.subj||"(без темы)")}</b> — ${esc(m.text.replace(/\n/g," ").slice(0,120))}</div>
+        <div class="from">${m.folder==="sent"||m.folder==="drafts" ? (m.from ? T("Кому")+": <span data-noi18n>"+esc(m.from)+"</span>" : T("(без адресата)")) : "<span data-noi18n>"+esc(m.from)+"</span>"}</div>
+        <div class="subj"><b data-noi18n>${esc(m.subj||T("(без темы)"))}</b> — <span data-noi18n>${esc(m.text.replace(/\n/g," ").slice(0,120))}</span></div>
         <div class="meta">${m.files&&m.files.length?"📎":""}${m.folder==="drafts"?'<span style="color:var(--red)">Черновик</span>':""}${fmtDate(m.date)}</div>
       </div>`;
     }).join("");
@@ -396,13 +402,13 @@
     openId=id; m.unread=false;
     const out=m.folder==="sent";
     $("readBody").innerHTML=`
-      <h1>${esc(m.subj||"(без темы)")}</h1>
+      <h1 data-noi18n>${esc(m.subj||T("(без темы)"))}</h1>
       <div class="hdr">
         <div class="ava" style="background:${color(out?ME.name:m.from)}">${initial(out?ME.name:m.from)}</div>
         <div><b>${esc(out?ME.name:m.from)}</b><small>${esc(out?ME.mail:m.addr)} → ${esc(out?m.addr:ME.mail)}</small></div>
         <div class="date">${fmtDate(m.date,true)}</div>
       </div>
-      <div class="text">${esc(m.text)}</div>
+      <div class="text" data-noi18n>${esc(m.text)}</div>
       ${m.files&&m.files.length?`<div class="files">${m.files.map(fileHtml).join("")}</div>`:""}`;
     $("list").style.display="none"; $("read").classList.add("on");
     $("listBar").style.display="none"; $("readBar").style.display="flex";
