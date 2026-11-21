@@ -219,6 +219,21 @@ apitest)
   docker compose logs --since 2m nginx-mailcow 2>/dev/null | grep 'status/version' | tail -4 | cut -c1-120
   ;;
 
+netinfo)
+  CAND=${2:-247}
+  echo "== netinfo: read-only, candidate fixed address for nginx: ${IPV4_NETWORK}.${CAND}"
+  echo "-- fixed addresses in docker-compose.yml (service: address):"
+  awk '/^  [a-z0-9-]+:$/{s=$1} /ipv4_address/{print "   " s, $2}' docker-compose.yml
+  echo "-- fixed addresses in docker-compose.override.yml:"; grep -n ipv4_address docker-compose.override.yml || echo "   none"
+  echo "-- network section of docker-compose.yml:"
+  awk '/^networks:/{p=1} p' docker-compose.yml | head -20
+  NET=$(docker network ls --format '{{.Name}}' | grep mailcow-network | head -1)
+  echo "-- containers in $NET now:"
+  docker network inspect $NET --format '{{range .Containers}}{{.Name}} {{.IPv4Address}}{{"\n"}}{{end}}' | sort -t. -k4 -n
+  if docker network inspect $NET --format '{{range .Containers}}{{.IPv4Address}} {{end}}' | grep -qw "${IPV4_NETWORK}.${CAND}/24"; then echo "RESULT: ${IPV4_NETWORK}.${CAND} is IN USE now"; else echo "RESULT: ${IPV4_NETWORK}.${CAND} is not used by a running container"; fi
+  if grep -q "${CAND}\$" <(awk '/ipv4_address/{print $2}' docker-compose.yml); then echo "RESULT: .${CAND} is RESERVED in docker-compose.yml"; else echo "RESULT: .${CAND} is not reserved in docker-compose.yml"; fi
+  ;;
+
 restart)
   echo "== restart mailcow (webmail down for 1-2 minutes)"
   docker compose down && docker compose up -d
@@ -229,5 +244,5 @@ mailboxes)
   sql mailcow -e "SELECT username, active FROM mailbox WHERE domain='kazxat.kz';"
   ;;
 
-*) echo "usage: $0 a|b|c|d|e|f|g|h|theme|pwinfo|password|apitest|restart|mailboxes" ;;
+*) echo "usage: $0 a|b|c|d|e|f|g|h|theme|pwinfo|password|apitest|netinfo|restart|mailboxes" ;;
 esac
