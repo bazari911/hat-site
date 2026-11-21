@@ -73,6 +73,8 @@
   .cal-info b{display:block}
   .legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:8px}
   .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+  .more-link{display:block;margin-top:10px;font-size:13px;font-weight:600;color:var(--blue-dark)}
+  .more-link:hover{text-decoration:underline}
   .rate-date{font-size:12px;color:var(--muted);margin:-6px 0 8px}
   .board .row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
   .board .row:first-child{border-top:none}
@@ -238,32 +240,32 @@
     <aside class="left">
       <div class="card services">
         <div class="today" id="today"></div>
-        <a href="#login"><span class="ico">✉️</span>Почта</a>
-        <a href="#news"><span class="ico">📰</span>Новости</a>
-        <a href="#weather"><span class="ico">🌤️</span>Погода</a>
-        <a href="#rates"><span class="ico">💱</span>Курсы валют</a>
-        <a href="#"><span class="ico">⚽</span>Спорт</a>
-        <a href="#"><span class="ico">🗺️</span>Карты</a>
-        <a href="#"><span class="ico">☁️</span>Облако</a>
+        <a href="auth.html#login"><span class="ico">✉️</span>Почта</a>
+        <a href="#news" id="menuNews"><span class="ico">📰</span>Новости</a>
+        <a href="https://www.gismeteo.kz/weather-astana-5164/" id="menuWeather" target="_blank" rel="noopener"><span class="ico">🌤️</span>Погода</a>
+        <a href="https://nationalbank.kz/ru/exchangerates/ezhednevnye-oficialnye-rynochnye-kursy-valyut" target="_blank" rel="noopener"><span class="ico">💱</span>Курсы валют</a>
+        <a href="https://qazsporttv.kz" target="_blank" rel="noopener"><span class="ico">⚽</span>Спорт</a>
+        <a href="https://yandex.kz/maps/" target="_blank" rel="noopener"><span class="ico">🗺️</span>Карты</a>
       </div>
 
       <!-- ПОГОДА (живые данные Open-Meteo) -->
       <div class="card widget" id="weather">
         <h3>Погода
           <select id="city">
-            <option value="51.17,71.43">Астана</option>
-            <option value="43.24,76.89">Алматы</option>
-            <option value="42.32,69.59">Шымкент</option>
-            <option value="49.81,73.10">Караганда</option>
-            <option value="50.28,57.17">Актобе</option>
-            <option value="47.11,51.92">Атырау</option>
-            <option value="52.29,76.95">Павлодар</option>
-            <option value="49.95,82.61">Усть-Каменогорск</option>
-            <option value="44.85,65.51">Кызылорда</option>
-            <option value="42.90,71.37">Тараз</option>
+            <option value="51.17,71.43" data-gm="weather-astana-5164">Астана</option>
+            <option value="43.24,76.89" data-gm="weather-almaty-5205">Алматы</option>
+            <option value="42.32,69.59" data-gm="weather-shymkent-5324">Шымкент</option>
+            <option value="49.81,73.10" data-gm="weather-karaganda-5168">Караганда</option>
+            <option value="50.28,57.17" data-gm="weather-aktobe-5165">Актобе</option>
+            <option value="47.11,51.92" data-gm="weather-atyrau-11945">Атырау</option>
+            <option value="52.29,76.95" data-gm="weather-pavlodar-5174">Павлодар</option>
+            <option value="49.95,82.61" data-gm="weather-ust-kamenogorsk-5201">Усть-Каменогорск</option>
+            <option value="44.85,65.51" data-gm="weather-kyzylorda-5319">Кызылорда</option>
+            <option value="42.90,71.37" data-gm="weather-taraz-5325">Тараз</option>
           </select>
         </h3>
         <div id="wbox">Загрузка…</div>
+        <a class="more-link" id="gmLink" href="https://www.gismeteo.kz/weather-astana-5164/" target="_blank" rel="noopener">Подробный прогноз на Gismeteo →</a>
         <div class="small" id="wnote">Данные: Open-Meteo</div>
       </div>
 
@@ -296,8 +298,8 @@
     <!-- ПРАВАЯ КОЛОНКА: вход в почту + реклама -->
     <aside>
       <div class="card login" id="login">
-        <div class="mail-logo">Хат<span>.Почта</span></div>
-        <p>Бесплатная казахстанская почта с адресом в зоне .kz</p>
+        <div class="mail-logo"><span>@</span>kazxat.kz</div>
+        <p>Казахстанская почта: адрес в зоне .kz, серверы в Казахстане</p>
         <a class="btn btn-blue" id="mailLogin" href="#">Войти в почту</a>
         <a class="btn btn-ghost" href="auth.html#register">Создать ящик</a>
         <div class="addr">Ваш адрес: <b>имя@kazxat.kz</b></div>
@@ -305,10 +307,11 @@
 
       <!-- КУРСЫ ВАЛЮТ (живые данные) + конвертер -->
       <div class="card widget" id="rates">
-        <h3>Курсы валют</h3>
+        <h3><a href="https://nationalbank.kz/ru/exchangerates/ezhednevnye-oficialnye-rynochnye-kursy-valyut" target="_blank" rel="noopener">Курсы валют</a></h3>
         <div class="rate-date" id="rateDate">Нацбанк РК</div>
         <div class="board" id="ratesTable">Загрузка…</div>
         <div class="rate-note" id="rateNote"></div>
+        <a class="more-link" href="https://nationalbank.kz/ru/exchangerates/ezhednevnye-oficialnye-rynochnye-kursy-valyut" target="_blank" rel="noopener">Все официальные курсы Нацбанка →</a>
       </div>
 
       <!-- Рекламное место: боковой баннер -->
@@ -533,26 +536,59 @@
         <div class="w-days">${days}</div>`;
     }catch(e){ box.textContent="Не удалось загрузить погоду"; }
   }
-  citySel.addEventListener("change",loadWeather);
-  loadWeather(); // сначала Астана по умолчанию
-
-  // Если пользователь разрешит геолокацию — берём ближайший город (или его точку)
+  // Ссылка на Gismeteo для выбранного города (для «моего места» — ближайший город)
+  function updateGismeteo(){
+    const opt=citySel.selectedOptions[0];
+    let gm=opt && opt.dataset.gm;
+    if(!gm && opt){ const [la,lo]=opt.value.split(",").map(Number); const n=nearestCity(la,lo); if(n.dist<150) gm=n.opt.dataset.gm; }
+    const url = gm ? `https://www.gismeteo.kz/${gm}/` : "https://www.gismeteo.kz/";
+    document.getElementById("gmLink").href=url;
+    document.getElementById("menuWeather").href=url;
+  }
   function distKm(a1,o1,a2,o2){const R=6371,r=Math.PI/180,dA=(a2-a1)*r,dO=(o2-o1)*r;
     const x=Math.sin(dA/2)**2+Math.cos(a1*r)*Math.cos(a2*r)*Math.sin(dO/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(pos=>{
-      const {latitude:la, longitude:lo}=pos.coords;
-      let best=null, bd=1e9;
-      [...citySel.options].forEach(o=>{const [a,b]=o.value.split(",").map(Number);const d=distKm(la,lo,a,b);if(d<bd){bd=d;best=o;}});
-      if(bd<60){ citySel.value=best.value; }
-      else{
-        const o=new Option("📍 Моё местоположение",`${la.toFixed(2)},${lo.toFixed(2)}`);
-        citySel.add(o,0); citySel.value=o.value;
-      }
-      document.getElementById("wnote").textContent="📍 Место определено автоматически · Open-Meteo";
-      loadWeather();
-    },()=>{/* отказ — остаётся Астана */},{timeout:8000,maximumAge:3600000});
+  function nearestCity(la,lo){
+    let best=null, bd=1e9;
+    [...citySel.options].filter(o=>o.dataset.gm).forEach(o=>{const [a,b]=o.value.split(",").map(Number);const d=distKm(la,lo,a,b);if(d<bd){bd=d;best=o;}});
+    return {opt:best, dist:bd};
   }
+  function pickCity(value){ citySel.value=value; updateGismeteo(); loadWeather(); }
+
+  // Ручной выбор запоминаем в этом браузере
+  citySel.addEventListener("change",()=>{
+    try{ localStorage.setItem("hatCity",citySel.value); }catch(e){}
+    document.getElementById("wnote").textContent="Данные: Open-Meteo";
+    updateGismeteo(); loadWeather();
+  });
+
+  // Город определяется автоматически по IP-адресу (браузер ничего не спрашивает).
+  // Если человек раньше выбрал город вручную — показываем его выбор.
+  async function detectCity(){
+    let saved=null; try{ saved=localStorage.getItem("hatCity"); }catch(e){}
+    if(saved && [...citySel.options].some(o=>o.value===saved)){ pickCity(saved); return; }
+    pickCity(citySel.options[0].value); // пока определяем — Астана
+    const services=[
+      ["https://get.geojs.io/v1/ip/geo.json", d=>[+d.latitude,+d.longitude,d.country_code]],
+      ["https://ipapi.co/json/",             d=>[+d.latitude,+d.longitude,d.country_code]],
+    ];
+    for(const [url,parse] of services){
+      try{
+        const r=await fetch(url,{cache:"no-store"}); if(!r.ok) continue;
+        const [la,lo,cc]=parse(await r.json());
+        if(!isFinite(la)||!isFinite(lo)) continue;
+        if(cc && cc!=="KZ") return;              // не из Казахстана — оставляем Астану
+        const n=nearestCity(la,lo);
+        if(n.dist<120) pickCity(n.opt.value);
+        else{
+          const o=new Option("📍 Моё местоположение",`${la.toFixed(2)},${lo.toFixed(2)}`);
+          citySel.add(o,0); pickCity(o.value);
+        }
+        document.getElementById("wnote").textContent="📍 Город определён автоматически · Open-Meteo";
+        return;
+      }catch(e){}
+    }
+  }
+  detectCity();
 
   /* ===== КАЛЕНДАРЬ с праздниками Казахстана ===== */
   // Ежегодные праздники (месяц-день). Если выпадают на сб/вс — выходной переносится на следующий рабочий день.
