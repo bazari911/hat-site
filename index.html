@@ -38,6 +38,8 @@
   .widget select,.widget input{border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:13px;background:#fff}
   #weather h3{flex-wrap:wrap;gap:6px}
   #weather select{width:100%}
+  .gps-btn{border:1px solid var(--line);background:#fff;border-radius:7px;font-size:12px;padding:3px 8px;cursor:pointer;color:var(--blue-dark);font-weight:600}
+  .gps-btn:hover{border-color:var(--blue)}
   .w-now{display:flex;align-items:center;gap:10px;margin:6px 0 10px}
   .w-now .big{font-size:34px;font-weight:800}
   .w-now .emo{font-size:34px}
@@ -250,7 +252,7 @@
 
       <!-- ПОГОДА (живые данные Open-Meteo) -->
       <div class="card widget" id="weather">
-        <h3>Погода
+        <h3>Погода <button type="button" class="gps-btn" id="gpsBtn" title="Определить место точнее по GPS">📍 Точнее</button>
           <select id="city">
             <option value="51.17,71.43" data-gm="weather-astana-5164">Астана</option>
             <option value="43.24,76.89" data-gm="weather-almaty-5205">Алматы</option>
@@ -427,7 +429,10 @@
   };
   function inCat(n,cat){
     const re=CATS[cat]; if(!re) return true;
-    return re.test(n.tag||"") || re.test(n.title||"");
+    // Если рубрика издания относится к какому-то разделу — решает только она
+    const tag=n.tag||"";
+    if(tag && Object.values(CATS).some(r=>r.test(tag))) return re.test(tag);
+    return re.test(n.title||"");
   }
   function filtered(){
     let list = curSrc==="all" ? NEWS : NEWS.filter(n=>n.src===curSrc);
@@ -623,6 +628,26 @@
     }catch(e){ return ""; }
   }
   detectCity();
+
+  // По кнопке «📍 Точнее» — местоположение от браузера (GPS / Wi-Fi), браузер спросит разрешение
+  document.getElementById("gpsBtn").onclick=()=>{
+    const note=document.getElementById("wnote");
+    if(!navigator.geolocation){ note.textContent="Браузер не умеет определять местоположение"; return; }
+    note.textContent="Определяем местоположение…";
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      const la=pos.coords.latitude, lo=pos.coords.longitude, n=nearestCity(la,lo);
+      let name;
+      [...citySel.options].filter(o=>o.textContent.startsWith("📍")).forEach(o=>o.remove());
+      if(n.dist<40){ pickCity(n.opt.value); name=n.opt.textContent; }
+      else{
+        name = await placeName(la,lo) || "Моё местоположение";
+        const o=new Option("📍 "+name,`${la.toFixed(2)},${lo.toFixed(2)}`);
+        citySel.add(o,0); pickCity(o.value);
+      }
+      try{ localStorage.setItem("hatCity",citySel.value); }catch(e){}
+      note.textContent=`📍 ${name} — определено по местоположению · Open-Meteo`;
+    },()=>{ note.textContent="Нет доступа к местоположению. Выберите город в списке"; },{timeout:10000,maximumAge:600000});
+  };
 
   /* ===== КАЛЕНДАРЬ с праздниками Казахстана ===== */
   // Ежегодные праздники (месяц-день). Если выпадают на сб/вс — выходной переносится на следующий рабочий день.
