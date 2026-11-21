@@ -18,7 +18,59 @@
       s.textContent = name.charAt(0).toUpperCase();
       s.style.background = color(name);
       td.insertBefore(s, td.firstChild);
+      // фото пользователя @kazxat.kz, если он его загрузил (иначе остаётся буква)
+      var email = senderEmail(td);
+      if (email && /@kazxat\.kz$/i.test(email) && window.rcmail && rcmail.url) {
+        var img = document.createElement('img');
+        img.alt = '';
+        img.loading = 'lazy';
+        img.onerror = function () { this.remove(); };
+        img.src = rcmail.url('addressbook/photo', { _email: email, _error: 1 });
+        s.appendChild(img);
+      }
     }
+  }
+
+  function senderEmail(td) {
+    var el = td.querySelector('span.fromto [title*="@"]');
+    var t = el ? el.getAttribute('title') : '';
+    if (!t) { var f = td.querySelector('span.fromto'); t = f ? f.textContent : ''; }
+    var m = (t || '').match(/[A-Za-z0-9._+-]+@[A-Za-z0-9.-]+/);
+    return m ? m[0].toLowerCase() : '';
+  }
+
+  /* Настройки → Аватар: выбор фото, обрезка в квадрат 160×160, сжатие в JPEG */
+  function avatarSettings() {
+    var file = document.getElementById('hat-avatar-file');
+    if (!file) return;
+    var data = document.getElementById('hat-avatar-data');
+    var prev = document.getElementById('hat-avatar-preview');
+    var del = document.getElementById('hat-avatar-remove');
+    file.addEventListener('change', function () {
+      var f = file.files && file.files[0];
+      if (!f) return;
+      if (!/^image\//.test(f.type)) { alert('Выберите картинку (JPG или PNG)'); return; }
+      var url = URL.createObjectURL(f);
+      var im = new Image();
+      im.onload = function () {
+        var S = 160, side = Math.min(im.width, im.height);
+        var c = document.createElement('canvas'); c.width = S; c.height = S;
+        c.getContext('2d').drawImage(im, (im.width - side) / 2, (im.height - side) / 2, side, side, 0, 0, S, S);
+        var out = c.toDataURL('image/jpeg', 0.85);
+        URL.revokeObjectURL(url);
+        data.value = out;
+        prev.innerHTML = '';
+        var i = document.createElement('img'); i.src = out; i.alt = ''; prev.appendChild(i);
+        if (del) del.style.display = '';
+      };
+      im.onerror = function () { alert('Не удалось открыть картинку'); };
+      im.src = url;
+    });
+    if (del) del.addEventListener('click', function () {
+      data.value = '__delete__';
+      prev.innerHTML = '<span>?</span>';
+      del.style.display = 'none';
+    });
   }
 
   function addCompose() {
@@ -40,6 +92,7 @@
     if (done) return; done = true;
     if (document.getElementById('layout-sidebar')) document.body.classList.add('hat-has-sidebar');
     addCompose();
+    avatarSettings();
 
     if (window.rcmail && rcmail.env.task === 'mail' && !rcmail.env.action) {
       // без колонки предпросмотра: письмо открывается целиком
