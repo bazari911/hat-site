@@ -178,6 +178,34 @@ pwinfo)
   done
   ;;
 
+password)
+  echo "== password: Roundcube password plugin with mailcow driver"
+  P=$RC/plugins/password
+  PC=$P/config.inc.php
+  [ -f $P/drivers/mailcow.php ] && [ -f $TPL/password.config.inc.php.template ] || { echo "STOP: plugin or template missing"; exit 1; }
+  KEY=$(sql -N -s mailcow -e "SELECT api_key FROM api WHERE access='rw' AND active=1 AND skip_ip_check=0 LIMIT 1;")
+  [ -n "$KEY" ] || { echo "STOP: no active read-write API key (create it in mailcow admin)"; exit 1; }
+  echo "read-write API key found (${#KEY} chars, not shown)"
+  if [ "${HTTP_REDIRECT:-n}" = "y" ]; then APIHOST="https://${MAILCOW_HOSTNAME}"; else APIHOST="http://nginx"; fi
+  echo "API host: $APIHOST"
+  bak $PC
+  cp $TPL/password.config.inc.php.template $PC
+  sed -i "/api_host/ s#__APIHOST__#$APIHOST#; /api_token/ s#__APIKEY__#$KEY#" $PC
+  docker exec $PHP chown root:www-data /web/rc/plugins/password/config.inc.php
+  docker exec $PHP chmod 640 /web/rc/plugins/password/config.inc.php
+  echo "placeholders left in api_host/api_token lines (must be 0): $(grep -E 'api_host|api_token' $PC | grep -c '__' || true)"
+  ls -l $PC
+  if grep "plugins'\]" $C | grep -q "'password'"; then echo "'password' already in plugins"; else
+    bak $C
+    sed -i "/\$config\['plugins'\]/ s/\];/, 'password'];/" $C
+  fi
+  grep -n "plugins'\]" $C
+  docker exec $PHP php -l /web/rc/config/config.inc.php
+  docker exec $PHP php -l /web/rc/plugins/password/config.inc.php
+  echo "API test from php-fpm with the key: HTTP $(docker exec $PHP curl -s -o /dev/null -w '%{http_code}' -H "X-API-Key: $KEY" $APIHOST/api/v1/get/status/version || echo curl-failed)"
+  docker compose restart php-fpm-mailcow
+  ;;
+
 restart)
   echo "== restart mailcow (webmail down for 1-2 minutes)"
   docker compose down && docker compose up -d
@@ -188,5 +216,5 @@ mailboxes)
   sql mailcow -e "SELECT username, active FROM mailbox WHERE domain='kazxat.kz';"
   ;;
 
-*) echo "usage: $0 a|b|c|d|e|f|g|h|theme|pwinfo|restart|mailboxes" ;;
+*) echo "usage: $0 a|b|c|d|e|f|g|h|theme|pwinfo|password|restart|mailboxes" ;;
 esac
