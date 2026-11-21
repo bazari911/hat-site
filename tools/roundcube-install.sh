@@ -206,6 +206,19 @@ password)
   docker compose restart php-fpm-mailcow
   ;;
 
+apitest)
+  echo "== apitest: read-only check of the mailcow API from php-fpm (key not shown)"
+  KEY=$(sql -N -s mailcow -e "SELECT api_key FROM api WHERE access='rw' AND active=1 LIMIT 1;")
+  sql mailcow -e "SELECT access, allow_from, skip_ip_check, active FROM api;"
+  echo "DNS of ${MAILCOW_HOSTNAME} inside php-fpm: $(docker exec $PHP getent ahosts ${MAILCOW_HOSTNAME} | cut -d' ' -f1 | sort -u | tr '\n' ' ')"
+  for U in https://${MAILCOW_HOSTNAME} https://nginx; do
+    echo "$U -> HTTP $(docker exec $PHP curl -sk -o /dev/null -w '%{http_code} (connected to %{remote_ip})' -H "X-API-Key: $KEY" $U/api/v1/get/status/version 2>&1 || echo curl-failed)"
+  done
+  sleep 1
+  echo "nginx saw these clients for status/version (last 4):"
+  docker compose logs --since 2m nginx-mailcow 2>/dev/null | grep 'status/version' | tail -4 | cut -c1-120
+  ;;
+
 restart)
   echo "== restart mailcow (webmail down for 1-2 minutes)"
   docker compose down && docker compose up -d
@@ -216,5 +229,5 @@ mailboxes)
   sql mailcow -e "SELECT username, active FROM mailbox WHERE domain='kazxat.kz';"
   ;;
 
-*) echo "usage: $0 a|b|c|d|e|f|g|h|theme|pwinfo|password|restart|mailboxes" ;;
+*) echo "usage: $0 a|b|c|d|e|f|g|h|theme|pwinfo|password|apitest|restart|mailboxes" ;;
 esac
