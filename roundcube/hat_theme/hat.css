@@ -1,0 +1,62 @@
+/* ===== Хат — фирменные цвета поверх темы Elastic =====
+   голубой #00AFCA, тёмно-голубой #0089a0, глубокий #06566a, золото #FEC50C */
+
+/* --- кнопки и ссылки --- */
+.btn-primary, .btn.btn-primary, .button.mainaction, button.mainaction, input.mainaction {
+  background-color: #00AFCA !important; border-color: #00AFCA !important; color: #fff !important;
+}
+.btn-primary:hover, .btn.btn-primary:hover, .button.mainaction:hover {
+  background-color: #0089a0 !important; border-color: #0089a0 !important;
+}
+a, a:hover { color: #0089a0; }
+.form-control:focus, .custom-select:focus, input:focus, textarea:focus, select:focus {
+  border-color: #00AFCA !important; box-shadow: 0 0 0 .2rem rgba(0,175,202,.2) !important;
+}
+input[type=checkbox], input[type=radio] { accent-color: #00AFCA; }
+.custom-switch .custom-control-input:checked ~ .custom-control-label::before {
+  background-color: #00AFCA !important; border-color: #00AFCA !important;
+}
+
+/* --- левое меню (тёмная полоса) --- */
+#layout-menu { background: linear-gradient(180deg, #06566a 0%, #0089a0 100%) !important; }
+#layout-menu a, #layout-menu .menu a { color: #e6f7fb !important; }
+#layout-menu a:hover, #layout-menu .menu a:hover { background-color: rgba(255,255,255,.12) !important; color: #fff !important; }
+#layout-menu a.selected, #layout-menu .menu a.selected { background-color: rgba(255,255,255,.18) !important; color: #FEC50C !important; }
+#layout-menu a.compose, #layout-menu .compose {
+  background-color: #FEC50C !important; color: #06566a !important; font-weight: 700;
+}
+#layout-menu a.compose:hover { background-color: #d9a400 !important; }
+#layout-menu .popover-header { background: #06566a !important; }
+
+/* --- папки и списки --- */
+.listing li.selected, .listing li.selected > a,
+.listing tr.selected, .listing tr.selected td, table.records-table tr.selected td {
+  background-color: #e3f6fa !important; color: #06566a !important;
+}
+.listing li:hover, .listing tr:hover td { background-color: #f3fafc; }
+.unreadcount, .listing li .unreadcount, #folderlist-content .unreadcount {
+  background-color: #00AFCA !important; color: #fff !important;
+}
+.listing li.selected .unreadcount { background-color: #06566a !important; }
+table.messagelist tr.unread td.subject a, table.messagelist tr.unread span.subject { color: #06566a; }
+table.messagelist tr.flagged td, table.messagelist tr.flagged td a { color: #c0392b; }
+
+/* --- вкладки и выделения --- */
+.nav-link.active, .tabsbar .selected, .formcontainer .nav-tabs .nav-link.active {
+  border-bottom-color: #00AFCA !important; color: #06566a !important;
+}
+.progressbar .value, .quota-widget .bar { background-color: #00AFCA !important; }
+
+/* --- страница входа --- */
+body.task-login, body.task-login #layout, body.task-logout, body.task-logout #layout {
+  background: linear-gradient(135deg, #06566a 0%, #0089a0 55%, #00AFCA 100%) !important;
+}
+body.task-login #layout-content, body.task-logout #layout-content { background: transparent !important; }
+body.task-login #logo, body.task-logout #logo { max-width: 280px; max-height: 100px; margin-bottom: 18px; }
+body.task-login #login-form, body.task-logout #login-form {
+  background: #fff; border-radius: 16px; padding: 28px 28px 20px; box-shadow: 0 12px 40px rgba(0,0,0,.18);
+}
+body.task-login #login-form .btn-primary { border-radius: 10px; font-weight: 700; letter-spacing: .3px; }
+body.task-login #login-footer, body.task-logout #login-footer { color: rgba(255,255,255,.85) !important; }
+body.task-login #login-footer a { color: #FEC50C !important; }
+body.task-login #message .alert, body.task-login #message .ui.alert { border-radius: 10px; }

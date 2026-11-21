@@ -1,0 +1,34 @@
+<?php
+/* Хат — настройки Roundcube.
+   Шаблон без паролей: на сервере __DBPASS__ и __DESKEY__ заменяются настоящими значениями.
+   Основа — официальная инструкция mailcow (docs.mailcow.email → Roundcube). */
+
+$config['db_dsnw'] = 'mysql://roundcube:__DBPASS__@mysql/roundcubemail';
+
+// Почтовые серверы внутри mailcow
+$config['imap_host'] = 'dovecot:143';
+$config['smtp_host'] = 'postfix:588';
+$config['smtp_user'] = '%u';
+$config['smtp_pass'] = '%p';
+
+// Безопасность
+$config['des_key'] = '__DESKEY__';
+$config['cipher_method'] = 'chacha20-poly1305';
+$config['enable_installer'] = true;   // после инициализации базы выключить (false)
+
+// Плагины: стандартные из инструкции mailcow + наше оформление
+$config['plugins'] = ['archive', 'managesieve', 'acl', 'markasjunk', 'zipdownload', 'hat_theme'];
+$config['managesieve_host'] = 'dovecot:4190';
+$config['managesieve_vacation'] = 1;
+$config['mime_types'] = '/web/rc/config/mime.types';
+
+// Оформление «Хат»
+$config['product_name'] = 'Хат Почта';
+$config['skin'] = 'elastic';
+$config['skin_logo'] = 'plugins/hat_theme/logo.svg';
+$config['support_url'] = 'https://kazxat.kz';
+
+// Язык и вход
+$config['language'] = 'ru_RU';
+$config['username_domain'] = 'kazxat.kz';   // можно входить просто по имени, без @kazxat.kz
+$config['login_autocomplete'] = 2;
