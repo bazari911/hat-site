@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Хат — почта и новости Казахстана</title>
+<style>
+  :root{
+    --blue:#00AFCA;      /* голубой флага */
+    --blue-dark:#0089a0;
+    --blue-deep:#06566a;
+    --gold:#FEC50C;      /* золото флага */
+    --gold-dark:#d9a400;
+    --bg:#f2f6f8;
+    --card:#ffffff;
+    --text:#1d2a30;
+    --muted:#6b7c85;
+    --line:#dde6ea;
+    --radius:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.45}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 16px}
+
+  /* ===== ШАПКА ===== */
+  header{background:linear-gradient(90deg,var(--blue-deep),var(--blue));color:#fff}
+  .top{display:flex;align-items:center;gap:24px;height:72px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:34px;letter-spacing:.5px;color:var(--gold)}
+  .logo-mark{width:52px;height:52px;flex:none}
+  .logo-mark .rays{transform-origin:50px 50px;animation:spin 40s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .logo small{display:block;font-size:12px;font-weight:600;color:#e6f7fb;letter-spacing:.5px;margin-top:-4px}
+
+  /* Виджеты: погода, валюты */
+  .widget{padding:16px;margin-top:20px}
+  .widget h3{font-size:15px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+  .widget select,.widget input{border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:13px;background:#fff}
+  #weather h3{flex-wrap:wrap;gap:6px}
+  #weather select{width:100%}
+  .w-now{display:flex;align-items:center;gap:10px;margin:6px 0 10px}
+  .w-now .big{font-size:34px;font-weight:800}
+  .w-now .emo{font-size:34px}
+  .w-days{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;font-size:12px}
+  .w-days div{background:#f1f9fb;border-radius:8px;padding:6px 2px}
+  .w-days b{display:block;font-size:13px}
+  .small{font-size:11px;color:var(--muted);margin-top:8px}
+  .rates{width:100%;border-collapse:collapse;font-size:14px}
+  .rates td{padding:7px 0;border-top:1px solid var(--line)}
+  .rates tr:first-child td{border-top:none}
+  .rates td:last-child{text-align:right;font-weight:700}
+  .conv{display:flex;gap:6px;margin-top:12px}
+  .conv input{width:90px}
+  .conv-out{margin-top:8px;font-size:15px;font-weight:700;color:var(--blue-dark)}
+  .today{font-size:13px;color:var(--muted);padding:4px 10px 10px;border-bottom:1px solid var(--line);margin-bottom:6px}
+  .today b{display:block;font-size:22px;color:var(--text)}
+
+  /* Календарь */
+  .cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:700;font-size:14px}
+  .cal-head button{border:none;background:#eef6f8;border-radius:6px;width:26px;height:26px;cursor:pointer;color:var(--blue-deep);font-size:14px}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:12px}
+  .cal-grid .dn{font-weight:700;color:var(--muted);padding:4px 0}
+  .cal-grid .dn.we{color:#d63b3b}
+  .cal-grid .d{padding:5px 0;border-radius:7px;cursor:pointer;position:relative}
+  .cal-grid .d:hover{background:#eaf7fa}
+  .cal-grid .we{color:#d63b3b}
+  .cal-grid .hol{color:#fff;background:#d63b3b;font-weight:700}
+  .cal-grid .hol:hover{background:#b82e2e}
+  .cal-grid .trans{color:#d63b3b;font-weight:700;box-shadow:inset 0 0 0 1.5px #d63b3b}
+  .cal-grid .now{outline:2px solid var(--blue);outline-offset:-2px;font-weight:800}
+  .cal-grid .sel{background:var(--gold)!important;color:var(--blue-deep)!important}
+  .cal-info{margin-top:10px;font-size:13px;background:#f1f9fb;border-radius:8px;padding:8px 10px;min-height:36px}
+  .cal-info b{display:block}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:8px}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+  .rate-date{font-size:12px;color:var(--muted);margin:-6px 0 8px}
+  .board .row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+  .board .row:first-child{border-top:none}
+  .board .flag{font-size:22px;line-height:1}
+  .board .cur{flex:1;font-size:14px}
+  .board .cur b{display:block;font-size:15px}
+  .board .cur small{color:var(--muted);font-size:11px}
+  .board .val{text-align:right;font-size:17px;font-weight:800;white-space:nowrap}
+  .board .val small{display:block;font-size:11px;font-weight:600}
+  .up{color:#1e9e55;font-size:12px;font-weight:600}
+  .down{color:#d63b3b;font-size:12px;font-weight:600}
+  .rate-note{font-size:11px;color:var(--muted);margin-top:8px}
+  .rate-note.warn{color:#b07a00}
+
+  /* Вкладки источников */
+  .tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .tabs button{border:1px solid var(--line);background:#fff;border-radius:20px;padding:6px 14px;font-size:13px;cursor:pointer}
+  .tabs button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+  .src{font-weight:700}
+  .src-kazinform{color:#0089a0}
+  .src-tengri{color:#c0392b}
+  .search{flex:1;display:flex;max-width:560px}
+  .s-mode{display:flex;gap:2px;background:#fff;border-radius:10px 0 0 10px;padding:5px}
+  .s-mode button{border:none;background:#eef6f8;color:var(--blue-deep);font-size:12px;font-weight:600;padding:0 10px;border-radius:7px;cursor:pointer}
+  .s-mode button.on{background:var(--blue);color:#fff}
+  .search input{flex:1;min-width:0;border:none;border-radius:0;padding:12px 14px;font-size:15px;outline:none}
+  .search button[type=submit]{border:none;background:var(--gold);color:var(--blue-deep);font-weight:700;padding:0 20px;border-radius:0 10px 10px 0;cursor:pointer}
+  .search button[type=submit]:hover{background:var(--gold-dark)}
+  .top-right{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:14px}
+  .lang a{opacity:.75;padding:2px 4px}
+  .lang a.on{opacity:1;font-weight:700;border-bottom:2px solid var(--gold)}
+  .btn-login{background:var(--gold);color:var(--blue-deep);font-weight:700;padding:9px 18px;border-radius:9px}
+  .btn-login:hover{background:var(--gold-dark)}
+
+  nav{background:rgba(0,0,0,.12)}
+  nav .wrap{display:flex;gap:4px;overflow-x:auto}
+  nav a{padding:10px 14px;font-size:14px;white-space:nowrap;border-bottom:3px solid transparent}
+  nav a:hover,nav a.on{border-bottom-color:var(--gold)}
+
+  /* ===== РЕКЛАМНЫЕ МЕСТА ===== */
+  .ad{background:repeating-linear-gradient(45deg,#eef3f5,#eef3f5 10px,#e6edf0 10px,#e6edf0 20px);
+      border:2px dashed #c3d2d8;border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;
+      color:#8a9ba3;font-size:13px;text-align:center}
+  .ad b{font-size:14px;color:#6f838c}
+  .ad-top{height:90px;margin:16px 0}
+
+  /* ===== СЕТКА ===== */
+  .layout{display:grid;grid-template-columns:230px 1fr 300px;gap:20px;align-items:start}
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  h2.sec{font-size:20px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+  h2.sec::before{content:"";width:6px;height:22px;background:var(--gold);border-radius:3px}
+
+  /* Левая колонка: сервисы */
+  .services{padding:12px}
+  .services a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:14px}
+  .services a:hover{background:#eaf7fa}
+  .ico{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-size:15px;background:#e3f6fa}
+
+  /* Центр: новости */
+  .lead{display:grid;grid-template-columns:1.3fr 1fr;overflow:hidden;margin-bottom:20px}
+  .lead .pic{min-height:260px}
+  .lead .txt{padding:22px}
+  .lead h3{font-size:22px;line-height:1.25;margin:8px 0 10px}
+  .tag{display:inline-block;font-size:12px;font-weight:700;color:var(--blue-dark);background:#e3f6fa;padding:3px 9px;border-radius:20px}
+  .meta{font-size:12px;color:var(--muted);margin-top:10px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .news{overflow:hidden;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s}
+  .news:hover,.lead:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.08)}
+  .news .pic{height:130px}
+  .news .body{padding:12px 14px 14px}
+  .news h4{font-size:15px;line-height:1.3;margin:6px 0}
+  .news p{font-size:13px;color:var(--muted)}
+  .pic{display:flex;align-items:flex-end;padding:10px;color:#fff;font-size:12px;font-weight:600}
+  .ad-inline{grid-column:1/-1;height:120px}
+  .source{font-size:12px;color:var(--muted);margin-top:14px;text-align:right}
+  .source a{color:var(--blue-dark);text-decoration:underline}
+
+  /* Правая колонка: вход */
+  .login{padding:20px}
+  .login .mail-logo{font-size:24px;font-weight:800;color:var(--blue-deep)}
+  .login .mail-logo span{color:var(--gold-dark)}
+  .login p{font-size:13px;color:var(--muted);margin:6px 0 16px}
+  .btn{display:block;text-align:center;padding:12px;border-radius:10px;font-weight:700;font-size:15px}
+  .btn-blue{background:var(--blue);color:#fff}
+  .btn-blue:hover{background:var(--blue-dark)}
+  .btn-ghost{border:2px solid var(--blue);color:var(--blue-dark);margin-top:10px}
+  .btn-ghost:hover{background:#eaf7fa}
+  .addr{margin-top:14px;font-size:13px;text-align:center;color:var(--muted)}
+  .addr b{color:var(--text)}
+  .ad-side{height:400px;margin-top:20px}
+  .popular{padding:16px 18px;margin-top:20px}
+  .popular ol{list-style:none;counter-reset:n}
+  .popular li{counter-increment:n;display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+  .popular li:first-child{border-top:none}
+  .popular li::before{content:counter(n);font-weight:800;color:var(--gold-dark);min-width:16px}
+
+  /* ===== ПОДВАЛ ===== */
+  footer{background:var(--blue-deep);color:#cfeaf1;margin-top:32px;padding:26px 0;font-size:13px}
+  footer .wrap{display:flex;flex-wrap:wrap;gap:20px;justify-content:space-between}
+  footer .logo{font-size:22px}
+  footer a{margin-right:16px}
+  footer a:hover{color:var(--gold)}
+
+  /* ===== АДАПТИВ ===== */
+  @media(max-width:1020px){
+    .layout{grid-template-columns:1fr 300px}
+    .left{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+    .left .widget{margin-top:0}
+  }
+  @media(max-width:760px){ .left{grid-template-columns:1fr} }
+  @media(max-width:760px){
+    .layout{grid-template-columns:1fr}
+    .top{flex-wrap:wrap;height:auto;padding:12px 0;gap:12px}
+    .search{order:3;max-width:none;flex-basis:100%}
+    .lead{grid-template-columns:1fr}
+    .grid{grid-template-columns:1fr 1fr}
+    .ad-side{display:none}
+  }
+  @media(max-width:480px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap top">
+    <a href="#" class="logo"><svg class="logo-mark" viewBox="0 0 100 100"></svg><div>Хат<small>@kazxat.kz</small></div></a>
+    <form class="search" id="searchForm">
+      <div class="s-mode" id="sMode">
+        <button type="button" data-m="web" class="on">Интернет</button>
+        <button type="button" data-m="news">Новости</button>
+      </div>
+      <input type="text" id="q" placeholder="Найти в интернете">
+      <button type="submit">Найти</button>
+    </form>
+    <div class="top-right">
+      <div class="lang"><a href="#">ҚАЗ</a><a href="#" class="on">РУС</a></div>
+      <a href="#login" class="btn-login" id="topLogin">Войти</a>
+    </div>
+  </div>
+  <nav>
+    <div class="wrap">
+      <a href="#" class="on">Главное</a><a href="#">Казахстан</a><a href="#">Мир</a><a href="#">Экономика</a>
+      <a href="#">Общество</a><a href="#">Спорт</a><a href="#">Культура</a><a href="#">Технологии</a>
+    </div>
+  </nav>
+</header>
+
+<div class="wrap">
+  <!-- Рекламное место: верхний баннер -->
+  <div class="ad ad-top"><b>Рекламное место</b>Баннер 728×90 / 970×90</div>
+
+  <div class="layout">
+    <!-- ЛЕВАЯ КОЛОНКА: сервисы -->
+    <aside class="left">
+      <div class="card services">
+        <div class="today" id="today"></div>
+        <a href="#login"><span class="ico">✉️</span>Почта</a>
+        <a href="#news"><span class="ico">📰</span>Новости</a>
+        <a href="#weather"><span class="ico">🌤️</span>Погода</a>
+        <a href="#rates"><span class="ico">💱</span>Курсы валют</a>
+        <a href="#"><span class="ico">⚽</span>Спорт</a>
+        <a href="#"><span class="ico">🗺️</span>Карты</a>
+        <a href="#"><span class="ico">☁️</span>Облако</a>
+      </div>
+
+      <!-- ПОГОДА (живые данные Open-Meteo) -->
+      <div class="card widget" id="weather">
+        <h3>Погода
+          <select id="city">
+            <option value="51.17,71.43">Астана</option>
+            <option value="43.24,76.89">Алматы</option>
+            <option value="42.32,69.59">Шымкент</option>
+            <option value="49.81,73.10">Караганда</option>
+            <option value="50.28,57.17">Актобе</option>
+            <option value="47.11,51.92">Атырау</option>
+            <option value="52.29,76.95">Павлодар</option>
+            <option value="49.95,82.61">Усть-Каменогорск</option>
+            <option value="44.85,65.51">Кызылорда</option>
+            <option value="42.90,71.37">Тараз</option>
+          </select>
+        </h3>
+        <div id="wbox">Загрузка…</div>
+        <div class="small" id="wnote">Данные: Open-Meteo</div>
+      </div>
+
+      <!-- КАЛЕНДАРЬ с праздниками РК -->
+      <div class="card widget" id="calendar">
+        <div class="cal-head">
+          <button id="calPrev" aria-label="Предыдущий месяц">‹</button>
+          <span id="calTitle"></span>
+          <button id="calNext" aria-label="Следующий месяц">›</button>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="cal-info" id="calInfo">Нажмите на день, чтобы узнать, что в этот день</div>
+        <div class="legend"><span><i style="background:#d63b3b"></i>Праздник</span><span><i style="box-shadow:inset 0 0 0 1.5px #d63b3b"></i>Перенос</span></div>
+      </div>
+    </aside>
+
+    <!-- ЦЕНТР: новости -->
+    <main id="news">
+      <h2 class="sec">Главные новости</h2>
+      <div class="tabs" id="tabs">
+        <button class="on" data-src="all">Все источники</button>
+      </div>
+      <div id="lead"></div>
+      <div class="grid" id="grid"></div>
+      <div class="source" id="srcList"></div>
+    </main>
+
+    <!-- ПРАВАЯ КОЛОНКА: вход в почту + реклама -->
+    <aside>
+      <div class="card login" id="login">
+        <div class="mail-logo">Хат<span>.Почта</span></div>
+        <p>Бесплатная казахстанская почта с адресом в зоне .kz</p>
+        <a class="btn btn-blue" id="mailLogin" href="#">Войти в почту</a>
+        <a class="btn btn-ghost" href="auth.html#register">Создать ящик</a>
+        <div class="addr">Ваш адрес: <b>имя@kazxat.kz</b></div>
+      </div>
+
+      <!-- КУРСЫ ВАЛЮТ (живые данные) + конвертер -->
+      <div class="card widget" id="rates">
+        <h3>Курсы валют</h3>
+        <div class="rate-date" id="rateDate">Нацбанк РК</div>
+        <div class="board" id="ratesTable">Загрузка…</div>
+        <div class="rate-note" id="rateNote"></div>
+      </div>
+
+      <!-- Рекламное место: боковой баннер -->
+      <div class="ad ad-side"><b>Рекламное место</b>Баннер 300×400</div>
+
+      <div class="card popular">
+        <h2 class="sec">Популярное</h2>
+        <ol id="popular"></ol>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div><div class="logo"><svg class="logo-mark" viewBox="0 0 100 100" style="width:38px;height:38px"></svg>Хат</div>© 2026 kazxat.kz</div>
+    <div><a href="#">О проекте</a><a href="#">Реклама на сайте</a><a href="#">Помощь</a><a href="#">Конфиденциальность</a></div>
+  </div>
+</footer>
+
+<script>
+  /* ===== НАСТРОЙКИ ===== */
+  // Адрес веб-почты mailcow (поменяй, если почта висит на другом поддомене)
+  // Страница входа/регистрации (лежит рядом с index.html)
+  document.getElementById("mailLogin").href = "auth.html#login";
+  document.getElementById("topLogin").href  = "auth.html#login";
+
+  /* ===== ЛОГОТИП: жёлтая «собачка» @ с лучами солнца ===== */
+  document.querySelectorAll(".logo-mark").forEach(svg=>{
+    let rays="";
+    for(let i=0;i<32;i++){
+      const a=i*360/32;
+      rays+=`<polygon points="48.2,13 51.8,13 50,2" transform="rotate(${a} 50 50)"/>`;
+    }
+    svg.innerHTML=`<g class="rays" fill="#FEC50C">${rays}</g>
+      <circle cx="50" cy="50" r="34" fill="none" stroke="#FEC50C" stroke-width="2" opacity=".5"/>
+      <text x="50" y="53" text-anchor="middle" dominant-baseline="middle"
+        font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="62" fill="#FEC50C">@</text>`;
+  });
+
+  /* ===== СЕГОДНЯ: дата и время по Казахстану ===== */
+  function tick(){
+    const d=new Date();
+    const time=d.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Almaty"});
+    const date=d.toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long",timeZone:"Asia/Almaty"});
+    document.getElementById("today").innerHTML=`<b>${time}</b>${date}`;
+  }
+  tick(); setInterval(tick,10000);
+
+  /* ===== НОВОСТИ =====
+     Сейчас здесь ДЕМО-заглушки, чтобы посмотреть оформление.
+     Позже этот массив будет заполнять серверный скрипт из RSS Kazinform и Tengrinews
+     (браузер не может читать чужой RSS напрямую из-за ограничений CORS). */
+  const SOURCES = {
+    "Kazinform":         {link:"https://www.inform.kz/ru", color:"#0089a0"},
+    "Tengrinews":        {link:"https://tengrinews.kz",    color:"#c0392b"},
+    "24KZ":              {link:"https://24.kz/ru",         color:"#1f5fbf"},
+    "Bizmedia":          {link:"https://bizmedia.kz",      color:"#7b3fb5"},
+    "Informburo":        {link:"https://informburo.kz",    color:"#d35400"},
+    "Kapital.kz":        {link:"https://kapital.kz",       color:"#1e8449"},
+    "Atameken Business": {link:"https://inbusiness.kz/ru", color:"#b8860b"}
+  };
+  // кнопки-вкладки и подпись внизу ленты
+  const tabsEl=document.getElementById("tabs");
+  Object.keys(SOURCES).forEach(k=>{const b=document.createElement("button");b.dataset.src=k;b.textContent=k;tabsEl.appendChild(b);});
+  document.getElementById("srcList").innerHTML="Новости: "+Object.entries(SOURCES).map(([k,v])=>
+    `<a href="${v.link}" target="_blank" rel="noopener">${k}</a>`).join(", ")+". По клику статья открывается на сайте источника.";
+  const NEWS = [
+    {src:"Kazinform",         tag:"Казахстан", title:"Здесь будет главная новость дня", text:"Короткий анонс в две-три строки. Полный текст открывается на сайте источника.", time:"5 мин назад"},
+    {src:"Tengrinews",        tag:"Общество",  title:"Заголовок новости из раздела «Общество»", text:"Анонс новости в одну-две строки.", time:"12 мин назад"},
+    {src:"Kapital.kz",        tag:"Экономика", title:"Заголовок деловой новости", text:"Анонс новости в одну-две строки.", time:"18 мин назад"},
+    {src:"24KZ",              tag:"Казахстан", title:"Заголовок новости телеканала", text:"Анонс новости в одну-две строки.", time:"25 мин назад"},
+    {src:"Atameken Business", tag:"Бизнес",    title:"Заголовок новости для предпринимателей", text:"Анонс новости в одну-две строки.", time:"31 мин назад"},
+    {src:"Informburo",        tag:"Мир",       title:"Заголовок международной новости", text:"Анонс новости в одну-две строки.", time:"40 мин назад"},
+    {src:"Bizmedia",          tag:"Финансы",   title:"Заголовок финансовой новости", text:"Анонс новости в одну-две строки.", time:"48 мин назад"},
+    {src:"Tengrinews",        tag:"Спорт",     title:"Заголовок спортивной новости", text:"Анонс новости в одну-две строки.", time:"1 ч назад"},
+    {src:"Kazinform",         tag:"Культура",  title:"Заголовок новости о культуре", text:"Анонс новости в одну-две строки.", time:"1 ч назад"},
+    {src:"Kapital.kz",        tag:"Финансы",   title:"Ещё один заголовок о финансах", text:"Анонс новости в одну-две строки.", time:"1 ч назад"},
+    {src:"Informburo",        tag:"Казахстан", title:"Заголовок новости из регионов", text:"Анонс новости в одну-две строки.", time:"2 ч назад"},
+    {src:"24KZ",              tag:"Технологии",title:"Заголовок новости о технологиях", text:"Анонс новости в одну-две строки.", time:"2 ч назад"},
+    {src:"Atameken Business", tag:"Экономика", title:"Ещё один заголовок об экономике", text:"Анонс новости в одну-две строки.", time:"3 ч назад"},
+  ];
+
+  // Цветные заглушки вместо фото (потом заменятся картинками из RSS)
+  const COLORS = [["#00AFCA","#06566a"],["#FEC50C","#d97a00"],["#2bb3a3","#0b5e6b"],["#5b8def","#203d8a"],["#e2655a","#7a1f2b"],["#8a6be0","#3a2a7a"],["#3fbf6f","#1b5e3a"]];
+  const pic = (i,label)=>`<div class="pic" style="background:linear-gradient(135deg,${COLORS[i%7][0]},${COLORS[i%7][1]})">${label}</div>`;
+  const srcLabel = n => `<span class="src" style="color:${SOURCES[n.src].color}">${n.src}</span>`;
+
+  let curSrc="all", curQuery="";
+  function renderNews(){
+    let list = curSrc==="all" ? NEWS : NEWS.filter(n=>n.src===curSrc);
+    if(curQuery){
+      const q=curQuery.toLowerCase();
+      list=list.filter(n=>(n.title+" "+n.text+" "+n.tag).toLowerCase().includes(q));
+    }
+    const lead=document.getElementById("lead"), grid=document.getElementById("grid");
+    if(!list.length){
+      lead.innerHTML=`<div class="card" style="padding:24px">По запросу «${curQuery.replace(/</g,"&lt;")}» новостей не найдено.</div>`;
+      grid.innerHTML=""; return;
+    }
+    const [first, ...rest] = list;
+    lead.innerHTML = `
+      <a class="card lead" href="${SOURCES[first.src].link}" target="_blank" rel="noopener">
+        ${pic(0,"Фото новости")}
+        <div class="txt"><span class="tag">${first.tag}</span><h3>${first.title}</h3><p>${first.text}</p><div class="meta">${srcLabel(first)} · ${first.time}</div></div>
+      </a>`;
+    let html = "";
+    rest.forEach((n,i)=>{
+      html += `<a class="card news" href="${SOURCES[n.src].link}" target="_blank" rel="noopener">
+        ${pic(i+1,"Фото")}
+        <div class="body"><span class="tag">${n.tag}</span><h4>${n.title}</h4><p>${n.text}</p><div class="meta">${srcLabel(n)} · ${n.time}</div></div>
+      </a>`;
+      if(i===2) html += `<div class="ad ad-inline"><b>Рекламное место</b>Баннер внутри ленты 728×120</div>`;
+    });
+    grid.innerHTML = html;
+  }
+  document.getElementById("tabs").addEventListener("click",e=>{
+    if(e.target.tagName!=="BUTTON") return;
+    document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b===e.target));
+    curSrc=e.target.dataset.src; renderNews();
+  });
+  renderNews();
+
+  document.getElementById("popular").innerHTML =
+    NEWS.slice(0,5).map(n=>`<li><a href="${SOURCES[n.src].link}" target="_blank" rel="noopener">${n.title}</a></li>`).join("");
+
+  /* ===== ПОИСК: «Интернет» (Google) или «Новости» (по ленте сайта) ===== */
+  let sMode="web";
+  document.getElementById("sMode").addEventListener("click",e=>{
+    if(e.target.tagName!=="BUTTON") return;
+    sMode=e.target.dataset.m;
+    document.querySelectorAll("#sMode button").forEach(b=>b.classList.toggle("on",b===e.target));
+    document.getElementById("q").placeholder = sMode==="web" ? "Найти в интернете" : "Найти в новостях";
+  });
+  document.getElementById("searchForm").addEventListener("submit",e=>{
+    e.preventDefault();
+    const q=document.getElementById("q").value.trim();
+    if(sMode==="web"){
+      if(q) window.open("https://www.google.com/search?q="+encodeURIComponent(q),"_blank","noopener");
+    }else{
+      curQuery=q; renderNews();
+      document.getElementById("news").scrollIntoView({behavior:"smooth"});
+    }
+  });
+
+  /* ===== ПОГОДА (Open-Meteo) + автоопределение места ===== */
+  const WMO = c => c===0?["☀️","Ясно"]:c<=2?["🌤️","Малооблачно"]:c===3?["☁️","Пасмурно"]:c<=48?["🌫️","Туман"]:
+    c<=57?["🌦️","Морось"]:c<=67?["🌧️","Дождь"]:c<=77?["🌨️","Снег"]:c<=82?["🌧️","Ливень"]:c<=86?["❄️","Снегопад"]:["⛈️","Гроза"];
+  const DAYS=["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
+  const citySel=document.getElementById("city");
+  async function loadWeather(){
+    const [lat,lon]=citySel.value.split(",");
+    const box=document.getElementById("wbox");
+    box.textContent="Загрузка…";
+    try{
+      const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`+
+        `&current=temperature_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min`+
+        `&timezone=auto&forecast_days=3&wind_speed_unit=ms`);
+      const d=await r.json();
+      const [emo,txt]=WMO(d.current.weather_code);
+      let days="";
+      d.daily.time.forEach((t,i)=>{
+        const name=i===0?"Сегодня":DAYS[new Date(t+"T12:00").getDay()];
+        days+=`<div>${name}<b>${WMO(d.daily.weather_code[i])[0]}</b>${Math.round(d.daily.temperature_2m_max[i])}° / ${Math.round(d.daily.temperature_2m_min[i])}°</div>`;
+      });
+      box.innerHTML=`<div class="w-now"><span class="emo">${emo}</span><span class="big">${Math.round(d.current.temperature_2m)}°</span>
+        <span>${txt}<br><span class="small" style="margin:0">ветер ${Math.round(d.current.wind_speed_10m)} м/с</span></span></div>
+        <div class="w-days">${days}</div>`;
+    }catch(e){ box.textContent="Не удалось загрузить погоду"; }
+  }
+  citySel.addEventListener("change",loadWeather);
+  loadWeather(); // сначала Астана по умолчанию
+
+  // Если пользователь разрешит геолокацию — берём ближайший город (или его точку)
+  function distKm(a1,o1,a2,o2){const R=6371,r=Math.PI/180,dA=(a2-a1)*r,dO=(o2-o1)*r;
+    const x=Math.sin(dA/2)**2+Math.cos(a1*r)*Math.cos(a2*r)*Math.sin(dO/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(pos=>{
+      const {latitude:la, longitude:lo}=pos.coords;
+      let best=null, bd=1e9;
+      [...citySel.options].forEach(o=>{const [a,b]=o.value.split(",").map(Number);const d=distKm(la,lo,a,b);if(d<bd){bd=d;best=o;}});
+      if(bd<60){ citySel.value=best.value; }
+      else{
+        const o=new Option("📍 Моё местоположение",`${la.toFixed(2)},${lo.toFixed(2)}`);
+        citySel.add(o,0); citySel.value=o.value;
+      }
+      document.getElementById("wnote").textContent="📍 Место определено автоматически · Open-Meteo";
+      loadWeather();
+    },()=>{/* отказ — остаётся Астана */},{timeout:8000,maximumAge:3600000});
+  }
+
+  /* ===== КАЛЕНДАРЬ с праздниками Казахстана ===== */
+  // Ежегодные праздники (месяц-день). Если выпадают на сб/вс — выходной переносится на следующий рабочий день.
+  const FIXED={
+    "01-01":"Новый год","01-02":"Новый год",
+    "03-08":"Международный женский день",
+    "03-21":"Наурыз мейрамы","03-22":"Наурыз мейрамы","03-23":"Наурыз мейрамы",
+    "05-01":"Праздник единства народа Казахстана","05-07":"День защитника Отечества","05-09":"День Победы",
+    "07-06":"День столицы","08-30":"День Конституции","10-25":"День Республики","12-16":"День Независимости"
+  };
+  // Выходные без переноса: Рождество (каждый год) и первый день Курбан айта (дата меняется, по ДУМК)
+  const NO_TRANSFER={"01-07":"Православное Рождество"};
+  const KURBAN={2026:"05-27"}; // добавлять дату на каждый следующий год
+  const MONTHS=["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+  const WD=["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"];
+  const pad=n=>String(n).padStart(2,"0");
+  const isWE=d=>d.getDay()===0||d.getDay()===6;
+
+  function yearHolidays(y){
+    const map={}; // "YYYY-MM-DD" -> {name, type:"hol"|"trans"}
+    Object.entries(FIXED).forEach(([md,n])=>map[`${y}-${md}`]={name:n,type:"hol"});
+    Object.entries(NO_TRANSFER).forEach(([md,n])=>map[`${y}-${md}`]={name:n,type:"hol",noTr:true});
+    if(KURBAN[y]) map[`${y}-${KURBAN[y]}`]={name:"Курбан айт (первый день)",type:"hol",noTr:true};
+    // переносы
+    Object.keys(map).sort().forEach(k=>{
+      const h=map[k]; if(h.type!=="hol"||h.noTr) return;
+      const d=new Date(k+"T12:00"); if(!isWE(d)) return;
+      const t=new Date(d);
+      do{ t.setDate(t.getDate()+1); }
+      while(isWE(t) || map[`${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`]);
+      map[`${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`]={name:`Перенесённый выходной (${h.name})`,type:"trans"};
+    });
+    return map;
+  }
+
+  const now=new Date();
+  let calY=now.getFullYear(), calM=now.getMonth(), selKey=null;
+  function renderCal(){
+    const H=yearHolidays(calY);
+    document.getElementById("calTitle").textContent=`${MONTHS[calM]} ${calY}`;
+    let html=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"].map((d,i)=>`<div class="dn${i>4?" we":""}">${d}</div>`).join("");
+    const first=new Date(calY,calM,1), shift=(first.getDay()+6)%7, last=new Date(calY,calM+1,0).getDate();
+    html+="<div></div>".repeat(shift);
+    const todayKey=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+    for(let d=1; d<=last; d++){
+      const key=`${calY}-${pad(calM+1)}-${pad(d)}`, dt=new Date(calY,calM,d), h=H[key];
+      let cls="d";
+      if(h) cls+=" "+h.type; else if(isWE(dt)) cls+=" we";
+      if(key===todayKey) cls+=" now";
+      if(key===selKey) cls+=" sel";
+      html+=`<div class="${cls}" data-k="${key}">${d}</div>`;
+    }
+    document.getElementById("calGrid").innerHTML=html;
+  }
+  document.getElementById("calGrid").addEventListener("click",e=>{
+    const k=e.target.dataset && e.target.dataset.k; if(!k) return;
+    selKey=k; renderCal();
+    const dt=new Date(k+"T12:00"), h=yearHolidays(dt.getFullYear())[k];
+    const title=`${dt.getDate()} ${dt.toLocaleDateString("ru-RU",{month:"long"})}, ${WD[dt.getDay()]}`;
+    let txt;
+    if(h && h.type==="hol") txt=`🎉 ${h.name}. Праздничный выходной день`;
+    else if(h) txt=`🔁 ${h.name}`;
+    else if(isWE(dt)) txt=`${dt.getDay()===6?"Суббота":"Воскресенье"}, выходной день`;
+    else txt="Рабочий день";
+    document.getElementById("calInfo").innerHTML=`<b>${title}</b>${txt}`;
+  });
+  document.getElementById("calPrev").onclick=()=>{ if(--calM<0){calM=11;calY--;} renderCal(); };
+  document.getElementById("calNext").onclick=()=>{ if(++calM>11){calM=0;calY++;} renderCal(); };
+  renderCal();
+
+  /* ===== КУРСЫ НАЦБАНКА РК + КОНВЕРТЕР =====
+     Официальный источник: RSS Нацбанка https://nationalbank.kz/rss/rates_all.xml
+     Браузер не может читать его напрямую с чужого сайта (CORS), поэтому на сервере
+     настроим прокси по адресу NBK_PROXY. Пока прокси нет (например, при открытии файла
+     с компьютера), показываем рыночный курс и честно об этом пишем. */
+  const NBK_PROXY="/api/nbk/rates_all.xml";
+  const NBK_DIRECT="https://nationalbank.kz/rss/rates_all.xml";
+  const CUR={USD:["🇺🇸","Доллар США"],EUR:["🇪🇺","Евро"],RUB:["🇷🇺","Российский рубль"],GBP:["🇬🇧","Фунт стерлингов"]};
+
+  async function fromNBK(url){
+    const r=await fetch(url,{cache:"no-store"}); if(!r.ok) throw 0;
+    const xml=new DOMParser().parseFromString(await r.text(),"text/xml");
+    const out={}; let date="";
+    xml.querySelectorAll("item").forEach(it=>{
+      const code=it.querySelector("title")?.textContent.trim();
+      if(!CUR[code]) return;
+      const quant=parseFloat(it.querySelector("quant")?.textContent)||1;
+      out[code]={v:parseFloat(it.querySelector("description").textContent)/quant,
+                 ch:(parseFloat(it.querySelector("change")?.textContent)||0)/quant,
+                 idx:it.querySelector("index")?.textContent.trim()||""};
+      date=it.querySelector("pubDate")?.textContent.trim()||date;
+    });
+    if(!out.USD) throw 0;
+    return {rates:out,date};
+  }
+  async function fromMarket(){
+    const d=await (await fetch("https://open.er-api.com/v6/latest/USD")).json();
+    const out={}; Object.keys(CUR).forEach(c=>out[c]={v:d.rates.KZT/d.rates[c],ch:0,idx:""});
+    return {rates:out,date:""};
+  }
+  const fmt=v=>v.toLocaleString("ru-RU",{minimumFractionDigits:2,maximumFractionDigits:2});
+  async function loadRates(){
+    let res=null, official=true;
+    for(const u of [NBK_PROXY,NBK_DIRECT]){ try{ res=await fromNBK(u); break; }catch(e){} }
+    if(!res){ official=false; try{ res=await fromMarket(); }catch(e){} }
+    const box=document.getElementById("ratesTable");
+    if(!res){ box.textContent="Не удалось загрузить курсы"; return; }
+    box.innerHTML=Object.keys(CUR).map(c=>{
+      const r=res.rates[c]; if(!r) return "";
+      const ch = r.idx==="UP"?`<small class="up">▲ ${fmt(Math.abs(r.ch))}</small>`:
+                 r.idx==="DOWN"?`<small class="down">▼ ${fmt(Math.abs(r.ch))}</small>`:"";
+      return `<div class="row"><span class="flag">${CUR[c][0]}</span>
+        <span class="cur"><b>1 ${c}</b><small>${CUR[c][1]}</small></span>
+        <span class="val">${fmt(r.v)} ₸${ch}</span></div>`;
+    }).join("");
+    const note=document.getElementById("rateNote");
+    if(official){
+      document.getElementById("rateDate").textContent="Официальный курс Нацбанка РК на "+res.date;
+      note.textContent=""; 
+    }else{
+      document.getElementById("rateDate").textContent="Нацбанк РК";
+      note.textContent="Курс Нацбанка появится, когда сайт будет на сервере. Сейчас показан рыночный курс";
+      note.className="rate-note warn";
+    }
+  }
+  loadRates();
+  setInterval(loadRates,60*60*1000); // раз в час проверяем, не вышел ли новый курс
+</script>
+</body>
+</html>

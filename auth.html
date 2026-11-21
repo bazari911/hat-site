@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Хат.Почта — вход и регистрация</title>
+<style>
+  :root{
+    --blue:#00AFCA; --blue-dark:#0089a0; --blue-deep:#06566a;
+    --gold:#FEC50C; --gold-dark:#d9a400;
+    --bg:#f2f6f8; --card:#fff; --text:#1d2a30; --muted:#6b7c85; --line:#dde6ea;
+    --red:#d63b3b; --green:#1e9e55; --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.45;min-height:100vh;display:flex;flex-direction:column}
+  a{color:var(--blue-dark);text-decoration:none}
+  a:hover{text-decoration:underline}
+  a.btn:hover{text-decoration:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 16px;width:100%}
+
+  /* Шапка как на главной */
+  header{background:linear-gradient(90deg,var(--blue-deep),var(--blue));color:#fff}
+  .top{display:flex;align-items:center;height:72px;gap:20px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:34px;color:var(--gold)}
+  .logo:hover{text-decoration:none}
+  .logo small{display:block;font-size:12px;font-weight:600;color:#e6f7fb;margin-top:-4px}
+  .logo-mark{width:52px;height:52px;flex:none}
+  .logo-mark .rays{transform-origin:50px 50px;animation:spin 40s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .top-right{margin-left:auto;display:flex;align-items:center;gap:16px;font-size:14px}
+  .top-right a{color:#fff}
+  .lang a{opacity:.75;padding:2px 4px}
+  .lang a.on{opacity:1;font-weight:700;border-bottom:2px solid var(--gold)}
+
+  /* Основная часть */
+  main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:40px 0}
+  .layout{display:grid;grid-template-columns:1fr 500px;gap:48px;align-items:center}
+  .promo h1{font-size:34px;line-height:1.2;margin-bottom:14px}
+  .promo h1 span{color:var(--blue-dark)}
+  .promo p{color:var(--muted);font-size:16px;margin-bottom:24px;max-width:460px}
+  .perks{list-style:none;display:grid;gap:14px}
+  .perks li{display:flex;gap:14px;align-items:flex-start}
+  .perks .ico{width:42px;height:42px;border-radius:12px;background:#e3f6fa;display:grid;place-items:center;font-size:20px;flex:none}
+  .perks b{display:block}
+  .perks small{color:var(--muted);font-size:13px}
+
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:0 6px 24px rgba(6,86,106,.10);padding:32px}
+  .view{display:none}
+  .view.on{display:block;animation:fade .25s}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .card h2{font-size:24px;margin-bottom:6px}
+  .card .sub{color:var(--muted);font-size:14px;margin-bottom:22px}
+
+  /* Поля */
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+  .input{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:10px;background:#fff;transition:border-color .15s,box-shadow .15s}
+  .input:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,175,202,.15)}
+  .input.err{border-color:var(--red)}
+  .input.ok{border-color:var(--green)}
+  .input input,.input select{flex:1;min-width:0;border:none;outline:none;background:transparent;padding:12px 14px;font-size:15px;color:var(--text)}
+  .input .prefix{padding-left:14px;font-weight:700;color:var(--text)}
+  .input .prefix+input{padding-left:8px}
+  .input .suffix{padding-right:14px;color:var(--muted);font-weight:600;white-space:nowrap}
+  .input .eye{border:none;background:none;cursor:pointer;padding:0 12px;font-size:17px;opacity:.6}
+  .input .eye:hover{opacity:1}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .row3{display:grid;grid-template-columns:100px 1fr 110px;gap:8px}
+  .row2>*,.row3>*{min-width:0}
+  .input select{padding:12px 8px;cursor:pointer}
+  .err-box{background:#fdecec;color:#a42a2a;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:14px}
+  .err-box:empty{display:none}
+  .hint{font-size:12px;margin-top:5px;color:var(--muted);min-height:16px}
+  .hint.err{color:var(--red)}
+  .hint.ok{color:var(--green)}
+  .sugg{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .sugg button{border:1px dashed var(--blue);background:#f1fbfd;color:var(--blue-deep);border-radius:20px;padding:4px 10px;font-size:12px;cursor:pointer}
+  .sugg button:hover{background:#e0f6fa}
+  .seg{display:flex;gap:8px}
+  .seg label{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:1.5px solid var(--line);border-radius:10px;padding:11px;cursor:pointer;font-size:14px;font-weight:500;margin:0}
+  .seg input{accent-color:var(--blue)}
+  .seg label:has(input:checked){border-color:var(--blue);background:#f1fbfd}
+
+  .strength{height:5px;border-radius:3px;background:var(--line);margin-top:8px;overflow:hidden}
+  .strength i{display:block;height:100%;width:0;transition:width .2s,background .2s}
+
+  .check{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted);margin:6px 0 18px;cursor:pointer}
+  .check input{margin-top:2px;accent-color:var(--blue);width:16px;height:16px}
+
+  .btn{display:block;width:100%;border:none;border-radius:10px;padding:13px;font-size:16px;font-weight:700;cursor:pointer;text-align:center;transition:background .15s}
+  .btn-blue{background:var(--blue);color:#fff}
+  .btn-blue:hover{background:var(--blue-dark)}
+  .btn-blue:disabled{background:#a9dbe4;cursor:not-allowed}
+  .btn-gold{background:var(--gold);color:var(--blue-deep)}
+  .btn-gold:hover{background:var(--gold-dark)}
+  .btn-ghost{background:none;border:1.5px solid var(--line);color:var(--text);margin-top:10px}
+  .btn-ghost:hover{border-color:var(--blue)}
+  .links{display:flex;justify-content:space-between;font-size:14px;margin-top:16px}
+  .divider{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px;margin:20px 0}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  .chip{display:inline-flex;align-items:center;gap:8px;background:#f1f9fb;border-radius:20px;padding:6px 6px 6px 12px;font-weight:600;margin-bottom:18px}
+  .chip button{border:none;background:#fff;border-radius:14px;padding:3px 10px;font-size:12px;color:var(--blue-dark);cursor:pointer}
+  .back{border:none;background:none;color:var(--blue-dark);cursor:pointer;font-size:14px;margin-bottom:14px;padding:0}
+
+  .notice{border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:16px;display:none}
+  .notice.on{display:block}
+  .notice.info{background:#fff8dc;color:#7a5a00}
+  .notice.err{background:#fdecec;color:#a42a2a}
+
+  .steps{display:flex;gap:6px;margin-bottom:20px}
+  .steps i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+  .steps i.on{background:var(--blue)}
+
+  .done{text-align:center}
+  .done .big{font-size:56px;margin-bottom:10px}
+  .done .addr{display:inline-block;font-size:20px;font-weight:800;color:var(--blue-deep);background:#f1f9fb;border-radius:10px;padding:10px 18px;margin:12px 0 20px}
+
+  footer{background:var(--blue-deep);color:#cfeaf1;font-size:13px;padding:18px 0}
+  footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+  footer a{color:#cfeaf1;margin-left:16px}
+
+  @media(max-width:880px){
+    .layout{grid-template-columns:1fr;max-width:480px;margin:0 auto}
+    .promo{display:none}
+    main{padding:20px 0}
+    .card{padding:24px 20px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap top">
+    <a href="index.html" class="logo"><svg class="logo-mark" viewBox="0 0 100 100"></svg><div>Хат<small>@kazxat.kz</small></div></a>
+    <div class="top-right">
+      <a href="index.html">← На главную</a>
+      <div class="lang"><a href="#">ҚАЗ</a><a href="#" class="on">РУС</a></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap layout">
+
+    <!-- Левая часть: чем хороша почта -->
+    <section class="promo">
+      <h1>Казахстанская электронная почта <span>@kazxat.kz</span></h1>
+      <p>Казахстанский почтовый сервис</p>
+      <ul class="perks">
+        <li><span class="ico">🇰🇿</span><div><b>Адрес в зоне .kz</b><small>Красивый короткий адрес для работы и жизни</small></div></li>
+        <li><span class="ico">🛡️</span><div><b>Защита от спама и вирусов</b><small>Подозрительные письма отсеиваются автоматически</small></div></li>
+        <li><span class="ico">🏔️</span><div><b>Серверы в Казахстане</b><small>Письма хранятся на серверах в Алматы</small></div></li>
+        <li><span class="ico">🗣️</span><div><b>Қазақша и по-русски</b><small>Интерфейс на двух языках</small></div></li>
+      </ul>
+    </section>
+
+    <!-- Правая часть: карточка с видами -->
+    <section class="card">
+
+      <!-- ВИД 1: ВХОД, шаг 1 — адрес -->
+      <div class="view" id="v-login">
+        <h2>Вход в почту</h2>
+        <div class="sub">Введите адрес вашего ящика</div>
+        <form id="f-login1" novalidate>
+          <div class="field">
+            <label for="l-user">Почта</label>
+            <div class="input" id="l-user-box"><input id="l-user" autocomplete="username" placeholder="имя" autofocus><span class="suffix">@kazxat.kz</span></div>
+            <div class="hint" id="l-user-hint"></div>
+          </div>
+          <button class="btn btn-blue">Далее</button>
+        </form>
+        <div class="divider">нет ящика?</div>
+        <a class="btn btn-gold" href="#register">Создать почту</a>
+      </div>
+
+      <!-- ВИД 2: ВХОД, шаг 2 — пароль -->
+      <div class="view" id="v-password">
+        <h2>Введите пароль</h2>
+        <div class="chip"><span id="p-email"></span><button type="button" onclick="go('login')">изменить</button></div>
+        <div class="notice" id="p-notice"></div>
+        <form id="f-login2" novalidate>
+          <div class="field">
+            <label for="p-pass">Пароль</label>
+            <div class="input"><input type="password" id="p-pass" autocomplete="current-password"><button type="button" class="eye" data-for="p-pass">👁</button></div>
+          </div>
+          <label class="check"><input type="checkbox" checked> Запомнить меня на этом компьютере</label>
+          <button class="btn btn-blue">Войти</button>
+        </form>
+        <div class="links"><a href="#restore">Забыли пароль?</a><a href="#register">Создать почту</a></div>
+      </div>
+
+      <!-- ВИД 3: РЕГИСТРАЦИЯ, шаг 1 — о себе -->
+      <div class="view" id="v-register">
+        <div class="steps"><i class="on"></i><i></i><i></i></div>
+        <h2>Регистрация</h2>
+        <div class="sub">Шаг 1 из 3 · Расскажите о себе</div>
+        <form id="f-reg1" novalidate>
+          <div class="row2">
+            <div class="field"><label for="r-name">Имя</label><div class="input"><input id="r-name" autocomplete="given-name"></div></div>
+            <div class="field"><label for="r-surname">Фамилия</label><div class="input"><input id="r-surname" autocomplete="family-name"></div></div>
+          </div>
+          <div class="field">
+            <label>Дата рождения <span style="font-weight:400;color:var(--muted)">(регистрация с 18 лет)</span></label>
+            <div class="row3">
+              <div class="input"><select id="r-day"></select></div>
+              <div class="input"><select id="r-month"></select></div>
+              <div class="input"><select id="r-year"></select></div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Пол</label>
+            <div class="seg">
+              <label><input type="radio" name="gender" value="m"> Мужской</label>
+              <label><input type="radio" name="gender" value="f"> Женский</label>
+            </div>
+          </div>
+          <div class="err-box" id="r1-hint"></div>
+          <button class="btn btn-blue">Далее</button>
+        </form>
+        <div class="links"><span></span><a href="#login">У меня уже есть почта</a></div>
+      </div>
+
+      <!-- ВИД 4: РЕГИСТРАЦИЯ, шаг 2 — адрес и пароль -->
+      <div class="view" id="v-register2">
+        <div class="steps"><i class="on"></i><i class="on"></i><i></i></div>
+        <button class="back" onclick="go('register')">← Назад</button>
+        <h2>Придумайте адрес</h2>
+        <div class="sub">Шаг 2 из 3 · Адрес и пароль</div>
+        <form id="f-reg2" novalidate>
+          <div class="field">
+            <label for="r-user">Адрес почты</label>
+            <div class="input" id="r-user-box"><input id="r-user" autocomplete="off" placeholder="например, aidar.serikov"><span class="suffix">@kazxat.kz</span></div>
+            <div class="hint" id="r-user-hint">Латинские буквы, цифры, точка, дефис и подчёркивание</div>
+            <div class="sugg" id="r-sugg"></div>
+          </div>
+          <div class="field">
+            <label for="r-pass">Пароль</label>
+            <div class="input"><input type="password" id="r-pass" autocomplete="new-password"><button type="button" class="eye" data-for="r-pass">👁</button></div>
+            <div class="strength"><i id="r-str"></i></div>
+            <div class="hint" id="r-pass-hint">Не меньше 8 символов: буквы и цифры</div>
+          </div>
+          <div class="field">
+            <label for="r-pass2">Повторите пароль</label>
+            <div class="input" id="r-pass2-box"><input type="password" id="r-pass2" autocomplete="new-password"></div>
+            <div class="hint" id="r-pass2-hint"></div>
+          </div>
+          <button class="btn btn-blue">Далее</button>
+        </form>
+      </div>
+
+      <!-- ВИД 5: РЕГИСТРАЦИЯ, шаг 3 — телефон для восстановления -->
+      <div class="view" id="v-register3">
+        <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+        <button class="back" onclick="go('register2')">← Назад</button>
+        <h2>Защитите ящик</h2>
+        <div class="sub">Шаг 3 из 3 · Телефон поможет восстановить доступ, если забудете пароль</div>
+        <form id="f-reg3" novalidate>
+          <div class="field">
+            <label for="r-phone">Номер телефона</label>
+            <div class="input" id="r-phone-box"><span class="prefix">+7</span><input id="r-phone" type="tel" autocomplete="tel-national" placeholder="(___) ___-__-__"></div>
+            <div class="hint" id="r-phone-hint">На этот номер придёт код подтверждения</div>
+          </div>
+          <label class="check"><input type="checkbox" id="r-terms"> <span>Я принимаю <a href="#">Пользовательское соглашение</a> и <a href="#">Политику конфиденциальности</a></span></label>
+          <div class="notice info" id="r3-notice"></div>
+          <button class="btn btn-blue" id="r-submit" disabled>Создать почту</button>
+        </form>
+      </div>
+
+      <!-- ВИД 6: ГОТОВО -->
+      <div class="view done" id="v-done">
+        <div class="big">🎉</div>
+        <h2>Почта создана!</h2>
+        <div class="sub">Ваш новый адрес:</div>
+        <div class="addr" id="d-addr"></div>
+        <a class="btn btn-blue" id="d-go" href="mail.html">Перейти в почту</a>
+        <a class="btn btn-ghost" href="index.html">На главную</a>
+      </div>
+
+      <!-- ВИД 7: ВОССТАНОВЛЕНИЕ ПАРОЛЯ -->
+      <div class="view" id="v-restore">
+        <button class="back" onclick="go('login')">← Ко входу</button>
+        <h2>Восстановление доступа</h2>
+        <div class="sub">Укажите адрес почты и номер телефона, привязанный к ящику</div>
+        <div class="notice info" id="rs-notice"></div>
+        <form id="f-restore" novalidate>
+          <div class="field">
+            <label for="rs-user">Почта</label>
+            <div class="input"><input id="rs-user" placeholder="имя"><span class="suffix">@kazxat.kz</span></div>
+          </div>
+          <div class="field">
+            <label for="rs-phone">Номер телефона</label>
+            <div class="input"><span class="prefix">+7</span><input id="rs-phone" type="tel" placeholder="(___) ___-__-__"></div>
+          </div>
+          <button class="btn btn-blue">Получить код</button>
+        </form>
+      </div>
+
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 kazxat.kz</span>
+    <span><a href="#">Помощь</a><a href="#">Соглашение</a><a href="#">Конфиденциальность</a></span>
+  </div>
+</footer>
+
+<script>
+  /* ===== НАСТРОЙКИ ===== */
+  const DOMAIN = "kazxat.kz";
+  // Пока сервер не подключён, формы работают в демо-режиме (ничего никуда не отправляют)
+  const DEMO = true;
+  // Занятые и служебные адреса (на сервере проверка будет через API mailcow)
+  const TAKEN = ["admin","info","support","postmaster","abuse","root","mail","noreply","webmaster","hat","kazxat","test"];
+
+  /* ===== ЛОГОТИП ===== */
+  document.querySelectorAll(".logo-mark").forEach(svg=>{
+    let rays="";
+    for(let i=0;i<32;i++) rays+=`<polygon points="48.2,13 51.8,13 50,2" transform="rotate(${i*360/32} 50 50)"/>`;
+    svg.innerHTML=`<g class="rays" fill="#FEC50C">${rays}</g>
+      <circle cx="50" cy="50" r="34" fill="none" stroke="#FEC50C" stroke-width="2" opacity=".5"/>
+      <text x="50" y="53" text-anchor="middle" dominant-baseline="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="62" fill="#FEC50C">@</text>`;
+  });
+
+  /* ===== ПЕРЕКЛЮЧЕНИЕ ВИДОВ (по адресу: auth.html#login, #register, #restore) ===== */
+  const $=id=>document.getElementById(id);
+  function go(v){
+    try{ history.replaceState(null,"","#"+v); }catch(e){}
+    show(v);
+  }
+  // ссылки вида href="#register" тоже переключают экран напрямую
+  document.addEventListener("click",e=>{
+    const a=e.target.closest('a[href^="#"]'); if(!a||a.getAttribute("href").length<2) return;
+    e.preventDefault(); go(a.getAttribute("href").slice(1));
+  });
+  function show(v){
+    v = v || (location.hash||"#login").slice(1);
+    const el=$("v-"+v) ? v : "login";
+    document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+el));
+    document.title = {register:"Регистрация",register2:"Регистрация",register3:"Регистрация",done:"Почта создана",restore:"Восстановление доступа",password:"Вход"}[el]
+      ? ({register:"Регистрация",register2:"Регистрация",register3:"Регистрация",done:"Почта создана",restore:"Восстановление доступа",password:"Вход"}[el]+" — Хат.Почта") : "Вход — Хат.Почта";
+    const f=document.querySelector(".view.on input:not([type=checkbox]):not([type=radio])"); if(f) setTimeout(()=>f.focus(),50);
+  }
+  window.addEventListener("hashchange",()=>show()); show();
+
+  // Показать/скрыть пароль
+  document.querySelectorAll(".eye").forEach(b=>b.onclick=()=>{
+    const i=$(b.dataset.for); i.type = i.type==="password"?"text":"password"; b.style.opacity = i.type==="text"?1:"";
+  });
+
+  // Проверка имени ящика
+  function checkUser(v){
+    v=v.trim().toLowerCase().replace("@"+DOMAIN,"");
+    if(!v) return "Введите адрес";
+    if(v.length<3) return "Слишком короткий адрес (минимум 3 символа)";
+    if(v.length>30) return "Слишком длинный адрес (максимум 30 символов)";
+    if(!/^[a-z0-9._-]+$/.test(v)) return "Только латинские буквы, цифры, точка, дефис и подчёркивание";
+    if(!/^[a-z0-9]/.test(v)||!/[a-z0-9]$/.test(v)) return "Адрес должен начинаться и заканчиваться буквой или цифрой";
+    if(/[._-]{2}/.test(v)) return "Нельзя ставить два знака подряд";
+    return "";
+  }
+  function setHint(boxId,hintId,msg,ok){
+    const box=$(boxId), h=$(hintId);
+    if(box){ box.classList.toggle("err",!!msg); box.classList.toggle("ok",!msg&&ok); }
+    h.textContent=msg||ok||""; h.className="hint"+(msg?" err":ok?" ok":"");
+  }
+
+  /* ===== ВХОД ===== */
+  $("f-login1").onsubmit=e=>{
+    e.preventDefault();
+    const v=$("l-user").value.trim().toLowerCase().replace("@"+DOMAIN,"");
+    const err=checkUser(v);
+    if(err){ setHint("l-user-box","l-user-hint",err); return; }
+    setHint("l-user-box","l-user-hint","");
+    $("p-email").textContent=v+"@"+DOMAIN;
+    $("p-notice").className="notice";
+    $("p-pass").value="";
+    go("password");
+  };
+  $("f-login2").onsubmit=e=>{
+    e.preventDefault();
+    const n=$("p-notice");
+    if(!$("p-pass").value){ n.textContent="Введите пароль"; n.className="notice err on"; return; }
+    if(DEMO){ // демо: пускаем в ящик с любым паролем
+      try{ sessionStorage.setItem("hatUser",$("p-email").textContent); }catch(e){}
+      location.href="mail.html"; return;
+    }
+    // TODO: отправка на сервер авторизации
+  };
+
+  /* ===== РЕГИСТРАЦИЯ: шаг 1 ===== */
+  const MONTHS=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+  $("r-day").innerHTML='<option value="">День</option>'+Array.from({length:31},(_,i)=>`<option>${i+1}</option>`).join("");
+  $("r-month").innerHTML='<option value="">Месяц</option>'+MONTHS.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
+  const Y=new Date().getFullYear();
+  $("r-year").innerHTML='<option value="">Год</option>'+Array.from({length:90},(_,i)=>`<option>${Y-18-i}</option>`).join("");
+
+  $("f-reg1").onsubmit=e=>{
+    e.preventDefault();
+    const h=$("r1-hint");
+    if(!$("r-name").value.trim()||!$("r-surname").value.trim()) return h.textContent="Укажите имя и фамилию";
+    if(!$("r-day").value||!$("r-month").value||!$("r-year").value) return h.textContent="Укажите дату рождения";
+    const bd=new Date($("r-year").value,$("r-month").value-1,$("r-day").value);
+    if(bd.getDate()!=$("r-day").value) return h.textContent="Такой даты нет";
+    const now=new Date(), adult=new Date(bd.getFullYear()+18,bd.getMonth(),bd.getDate());
+    if(adult>now) return h.textContent="Регистрация доступна только с 18 лет";
+    if(!document.querySelector("input[name=gender]:checked")) return h.textContent="Выберите пол";
+    h.textContent="";
+    makeSuggestions();
+    go("register2");
+  };
+
+  // Транслитерация (в т.ч. казахские буквы) для подсказок адреса
+  const TR={а:"a",ә:"a",б:"b",в:"v",г:"g",ғ:"g",д:"d",е:"e",ё:"e",ж:"zh",з:"z",и:"i",й:"i",к:"k",қ:"q",л:"l",м:"m",н:"n",ң:"n",
+    о:"o",ө:"o",п:"p",р:"r",с:"s",т:"t",у:"u",ұ:"u",ү:"u",ф:"f",х:"kh",һ:"h",ц:"ts",ч:"ch",ш:"sh",щ:"sh",ъ:"",ы:"y",і:"i",ь:"",э:"e",ю:"yu",я:"ya"};
+  const tr=s=>s.toLowerCase().split("").map(c=>TR[c]!==undefined?TR[c]:c).join("").replace(/[^a-z0-9]/g,"");
+  function makeSuggestions(){
+    const n=tr($("r-name").value), s=tr($("r-surname").value), y=$("r-year").value, yy=y.slice(2);
+    const list=[...new Set([`${n}.${s}`,`${s}.${n}`,`${n}${s}`,`${n[0]||""}.${s}`,`${n}.${s}${yy}`,`${n}${y}`])]
+      .filter(x=>!checkUser(x)&&!TAKEN.includes(x)).slice(0,5);
+    $("r-sugg").innerHTML=list.map(x=>`<button type="button">${x}</button>`).join("");
+  }
+  $("r-sugg").onclick=e=>{ if(e.target.tagName==="BUTTON"){ $("r-user").value=e.target.textContent; checkReg(); } };
+
+  /* ===== РЕГИСТРАЦИЯ: шаг 2 ===== */
+  function checkReg(){
+    const v=$("r-user").value.trim().toLowerCase();
+    let err=checkUser(v);
+    if(!err && TAKEN.includes(v)) err="Этот адрес уже занят, попробуйте другой";
+    setHint("r-user-box","r-user-hint", v?err:"", !err&&v ? `✓ ${v}@${DOMAIN} свободен` : "");
+    if(!v) $("r-user-hint").textContent="Латинские буквы, цифры, точка, дефис и подчёркивание";
+    return !err;
+  }
+  $("r-user").addEventListener("input",checkReg);
+
+  function strength(p){
+    let s=0;
+    if(p.length>=8) s++; if(p.length>=12) s++;
+    if(/[a-zа-я]/.test(p)&&/[A-ZА-Я]/.test(p)) s++;
+    if(/\d/.test(p)) s++; if(/[^A-Za-zА-Яа-я0-9]/.test(p)) s++;
+    return s;
+  }
+  $("r-pass").addEventListener("input",()=>{
+    const p=$("r-pass").value, s=strength(p), bar=$("r-str"), h=$("r-pass-hint");
+    const lv = !p?["0%","",""] : p.length<8?["20%","var(--red)","Слишком короткий"] :
+      s<=2?["45%","#e67e22","Слабый пароль"] : s===3?["70%","var(--gold-dark)","Нормальный пароль"] : ["100%","var(--green)","Надёжный пароль"];
+    bar.style.width=lv[0]; bar.style.background=lv[1];
+    h.textContent=lv[2]||"Не меньше 8 символов: буквы и цифры"; h.style.color=lv[1]||"";
+    if($("r-pass2").value) checkPass2();
+  });
+  function checkPass2(){
+    const same=$("r-pass2").value===$("r-pass").value;
+    setHint("r-pass2-box","r-pass2-hint", same?"":"Пароли не совпадают", same?"✓ Пароли совпадают":"");
+    return same;
+  }
+  $("r-pass2").addEventListener("input",checkPass2);
+
+  $("f-reg2").onsubmit=e=>{
+    e.preventDefault();
+    if(!$("r-user").value.trim()){ setHint("r-user-box","r-user-hint","Придумайте адрес"); return; }
+    if(!checkReg()) return;
+    const p=$("r-pass").value;
+    if(p.length<8||!/\d/.test(p)||!/[A-Za-zА-Яа-я]/.test(p)){ const h=$("r-pass-hint"); h.textContent="Пароль: минимум 8 символов, буквы и цифры"; h.style.color="var(--red)"; return; }
+    if(!checkPass2()) return;
+    go("register3");
+  };
+
+  /* ===== РЕГИСТРАЦИЯ: шаг 3 — телефон ===== */
+  // В поле вводятся 10 цифр после +7, например 707 123 45 67
+  function phoneMask(inp){
+    let d=inp.value.replace(/\D/g,"");
+    if(d.length===11 && (d[0]==="7"||d[0]==="8")) d=d.slice(1); // вставили номер целиком
+    d=d.slice(0,10);
+    let f="";
+    if(d.length) f="("+d.slice(0,3);
+    if(d.length>=3) f+=")";
+    if(d.length>3) f+=" "+d.slice(3,6);
+    if(d.length>6) f+="-"+d.slice(6,8);
+    if(d.length>8) f+="-"+d.slice(8,10);
+    inp.value=f;
+    return d.length===10;
+  }
+  ["r-phone","rs-phone"].forEach(id=>$(id).addEventListener("input",e=>phoneMask(e.target)));
+  function canSubmit(){ $("r-submit").disabled=!$("r-terms").checked; }
+  $("r-terms").addEventListener("change",canSubmit);
+
+  $("f-reg3").onsubmit=e=>{
+    e.preventDefault();
+    if(!phoneMask($("r-phone"))){ setHint("r-phone-box","r-phone-hint","Введите номер полностью: 10 цифр после +7"); return; }
+    setHint("r-phone-box","r-phone-hint","");
+    const addr=$("r-user").value.trim().toLowerCase()+"@"+DOMAIN;
+    if(DEMO){
+      $("d-addr").textContent=addr;
+      try{ sessionStorage.setItem("hatUser",addr); }catch(e){}
+      go("done");
+      return;
+    }
+    // TODO: SMS-код и создание ящика через API mailcow на сервере
+  };
+
+  /* ===== ВОССТАНОВЛЕНИЕ ===== */
+  $("f-restore").onsubmit=e=>{
+    e.preventDefault();
+    const n=$("rs-notice");
+    if(checkUser($("rs-user").value)||!phoneMask($("rs-phone"))){ n.textContent="Укажите адрес почты и номер телефона полностью"; n.className="notice err on"; return; }
+    n.textContent="Демо-режим: отправку SMS-кода подключим, когда сайт будет на сервере."; n.className="notice info on";
+  };
+</script>
+</body>
+</html>
