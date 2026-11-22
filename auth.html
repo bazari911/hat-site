@@ -155,6 +155,12 @@
   /* язык Соглашения и Политики: ҚАЗ или РУС (lang.js ставит <html lang="kk">) */
   html[lang="kk"] .legal-ru{display:none}
   html:not([lang="kk"]) .legal-kk{display:none}
+  .ad-table{width:100%;border-collapse:collapse;margin:4px 0 12px;font-size:14px}
+  .ad-table th,.ad-table td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+  .ad-table th{background:#f1f9fb;color:var(--blue-deep);font-weight:700}
+  .about-btns{display:flex;gap:12px;margin:18px 0 6px;flex-wrap:wrap}
+  .about-btns .btn{width:auto;flex:1 1 200px}
+  #f-ads{margin-top:8px}
   .view.legal .legal-also{margin-top:22px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted)}
   footer{background:var(--blue-deep);color:#cfeaf1;font-size:13px;padding:18px 0}
   footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
@@ -621,6 +627,125 @@
         </div>
       </div>
 
+      <!-- ВИД 11: О ПРОЕКТЕ -->
+      <div class="view legal" id="v-about">
+        <div class="legal-ru" data-noi18n>
+          <a class="back" href="index.html">← На главную</a>
+          <h2>«Хат» — казахстанская электронная почта</h2>
+          <div class="sub">«Хат» по-казахски значит «письмо». Это бесплатная почта с адресом @kazxat.kz и портал с новостями Казахстана, погодой и курсами валют.</div>
+          <h3>Что даёт «Хат»</h3>
+          <ul>
+            <li><b>Адрес в зоне .kz</b> — имя@kazxat.kz, бесплатно, для всех с 18 лет.</li>
+            <li><b>Серверы в Казахстане</b> — письма, файлы и регистрационные данные хранятся на сервере в Алматы.</li>
+            <li><b>Ящик на 3 ГБ</b> и защита от спама и вирусов.</li>
+            <li><b>«Хат Диск»</b> — большие файлы до 2 ГБ отправляются ссылкой прямо из письма и хранятся 30 дней.</li>
+            <li><b>Регистрация без SMS</b> — подтверждение через Telegram-бота @kazxat_kz_bot или другую почту; забытый пароль восстанавливается через Telegram.</li>
+            <li><b>Қазақша и по-русски</b> — сайт работает на двух языках.</li>
+            <li><b>Портал</b> — новости казахстанских СМИ (Kazinform, Tengrinews, 24KZ и других), погода и официальные курсы Нацбанка.</li>
+          </ul>
+          <div class="about-btns"><a class="btn btn-gold" href="#register">Создать почту</a><a class="btn btn-blue" href="https://mail.kazxat.kz/rc/">Войти в почту</a></div>
+          <h3>Контакты</h3>
+          <p>Поддержка пользователей — <a href="#support">форма на сайте</a> или support@kazxat.kz.<br>Реклама на сайте — <a href="#ads">условия и заявка</a> или reklama@kazxat.kz.</p>
+          <p class="legal-also">Документы: <a href="#terms">Пользовательское соглашение</a> · <a href="#privacy">Политика конфиденциальности</a></p>
+        </div>
+        <div class="legal-kk" data-noi18n>
+          <a class="back" href="index.html">← Басты бетке</a>
+          <h2>«Хат» — қазақстандық электрондық пошта</h2>
+          <div class="sub">«Хат» — @kazxat.kz мекенжайы бар тегін пошта және Қазақстан жаңалықтары, ауа райы мен валюта бағамдары бар портал.</div>
+          <h3>«Хат» не береді</h3>
+          <ul>
+            <li><b>.kz аймағындағы мекенжай</b> — атыңыз@kazxat.kz, тегін, 18 жастан асқандардың бәріне.</li>
+            <li><b>Серверлер Қазақстанда</b> — хаттар, файлдар және тіркеу деректері Алматыдағы серверде сақталады.</li>
+            <li><b>3 ГБ жәшік</b>, спам мен вирустардан қорғау.</li>
+            <li><b>«Хат Диск»</b> — 2 ГБ-қа дейінгі үлкен файлдар хаттан тікелей сілтеме арқылы жіберіледі және 30 күн сақталады.</li>
+            <li><b>SMS-сіз тіркелу</b> — @kazxat_kz_bot Telegram-боты немесе басқа пошта арқылы растау; ұмытылған құпиясөз Telegram арқылы қалпына келтіріледі.</li>
+            <li><b>Қазақша және орысша</b> — сайт екі тілде жұмыс істейді.</li>
+            <li><b>Портал</b> — қазақстандық БАҚ жаңалықтары (Kazinform, Tengrinews, 24KZ және басқалары), ауа райы және Ұлттық банктің ресми бағамдары.</li>
+          </ul>
+          <div class="about-btns"><a class="btn btn-gold" href="#register">Пошта ашу</a><a class="btn btn-blue" href="https://mail.kazxat.kz/rc/">Поштаға кіру</a></div>
+          <h3>Байланыс</h3>
+          <p>Пайдаланушыларды қолдау — <a href="#support">сайттағы форма</a> немесе support@kazxat.kz.<br>Сайттағы жарнама — <a href="#ads">шарттар мен өтінім</a> немесе reklama@kazxat.kz.</p>
+          <p class="legal-also">Құжаттар: <a href="#terms">Пайдаланушылық келісім</a> · <a href="#privacy">Құпиялылық саясаты</a></p>
+        </div>
+      </div>
+
+      <!-- ВИД 12: РЕКЛАМА НА САЙТЕ -->
+      <div class="view legal" id="v-ads">
+        <div class="sub-step on" id="ad-form-step">
+        <div class="legal-ru" data-noi18n>
+          <a class="back" href="index.html">← На главную</a>
+          <h2>Реклама на «Хат»</h2>
+          <div class="sub">Разместите баннер на главной странице kazxat.kz — портала с почтой и новостями Казахстана. Цены — по запросу: напишите, что хотите разместить, и мы ответим на вашу почту с адреса reklama@kazxat.kz.</div>
+          <h3>Рекламные места</h3>
+          <table class="ad-table"><thead><tr><th>Место</th><th>Размер, px</th><th>Где на странице</th></tr></thead><tbody>
+            <tr><td>Верхний баннер</td><td>728×90 или 970×90</td><td>Вверху главной, над новостями</td></tr>
+            <tr><td>Боковой баннер</td><td>300×400</td><td>Справа, рядом со входом в почту и погодой</td></tr>
+            <tr><td>Баннер в ленте</td><td>728×120</td><td>Внутри ленты новостей</td></tr>
+          </tbody></table>
+          <h3>Что мы не размещаем</h3>
+          <ul>
+            <li>казино, ставки и другие азартные игры;</li>
+            <li>алкоголь;</li>
+            <li>табак, сигареты, вейпы и всё, что продаётся с акцизными марками;</li>
+            <li>рекламу, которая нарушает законодательство Республики Казахстан.</li>
+          </ul>
+          <h3>Заявка</h3>
+        </div>
+        <div class="legal-kk" data-noi18n>
+          <a class="back" href="index.html">← Басты бетке</a>
+          <h2>«Хат» сайтындағы жарнама</h2>
+          <div class="sub">kazxat.kz басты бетінде — поштасы мен Қазақстан жаңалықтары бар порталда баннер орналастырыңыз. Бағасы — сұраныс бойынша: не орналастырғыңыз келетінін жазыңыз, біз reklama@kazxat.kz мекенжайынан поштаңызға жауап береміз.</div>
+          <h3>Жарнама орындары</h3>
+          <table class="ad-table"><thead><tr><th>Орын</th><th>Өлшемі, px</th><th>Беттегі орны</th></tr></thead><tbody>
+            <tr><td>Жоғарғы баннер</td><td>728×90 немесе 970×90</td><td>Басты беттің жоғарғы жағында, жаңалықтардың үстінде</td></tr>
+            <tr><td>Бүйір баннер</td><td>300×400</td><td>Оң жақта, поштаға кіру мен ауа райының жанында</td></tr>
+            <tr><td>Лентадағы баннер</td><td>728×120</td><td>Жаңалықтар лентасының ішінде</td></tr>
+          </tbody></table>
+          <h3>Біз нені орналастырмаймыз</h3>
+          <ul>
+            <li>казино, бәс тігу және басқа құмар ойындар;</li>
+            <li>алкоголь;</li>
+            <li>темекі, сигарет, вейптер және акциз маркаларымен сатылатын барлық тауарлар;</li>
+            <li>Қазақстан Республикасының заңнамасын бұзатын жарнама.</li>
+          </ul>
+          <h3>Өтінім</h3>
+        </div>
+        <form id="f-ads" novalidate>
+          <div class="row2">
+            <div class="field"><label for="ad-company">Компания или бренд</label><div class="input"><input id="ad-company" maxlength="100" autocomplete="organization"></div></div>
+            <div class="field"><label for="ad-name">Как к вам обращаться</label><div class="input"><input id="ad-name" maxlength="60" autocomplete="name"></div></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="ad-email">Почта для ответа</label><div class="input"><input id="ad-email" type="email" autocomplete="email" placeholder="name@company.kz"></div></div>
+            <div class="field"><label for="ad-phone">Телефон <span style="font-weight:400;color:var(--muted)">(необязательно)</span></label><div class="input"><input id="ad-phone" type="tel" maxlength="30" autocomplete="tel" placeholder="+7"></div></div>
+          </div>
+          <div class="field">
+            <label for="ad-place">Какое место интересует</label>
+            <div class="input"><select id="ad-place">
+              <option value="Верхний баннер 728×90 / 970×90">Верхний баннер 728×90 / 970×90</option>
+              <option value="Боковой баннер 300×400">Боковой баннер 300×400</option>
+              <option value="Баннер в ленте новостей 728×120">Баннер в ленте новостей 728×120</option>
+              <option value="Другое / пока не знаю">Другое / пока не знаю</option>
+            </select></div>
+          </div>
+          <div class="field"><label for="ad-text">Что хотите разместить</label><div class="input"><textarea id="ad-text" rows="4" maxlength="3000" placeholder="Товар или услуга, сроки, бюджет"></textarea></div></div>
+          <div class="field">
+            <label for="ad-cap">Я не робот: введите цифры с картинки</label>
+            <div class="cap"><img id="ad-cap-img" alt="Цифры для проверки"><button type="button" class="linkbtn" id="ad-cap-new">Другая картинка</button></div>
+            <div class="input" id="ad-cap-box"><input id="ad-cap" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="5 цифр"></div>
+          </div>
+          <div class="notice err" id="ad-notice"></div>
+          <button class="btn btn-blue" id="ad-submit">Отправить заявку</button>
+        </form>
+        </div>
+        <div class="sub-step done" id="ad-done">
+          <svg class="done-ico" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#e3f6fa"/><path d="M19 33l9 9 17-19" fill="none" stroke="#1e9e55" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <h2>Заявка отправлена</h2>
+          <div class="sub">Мы ответим на указанную почту с адреса reklama@kazxat.kz.</div>
+          <a class="btn btn-blue" href="index.html" style="margin-top:18px">На главную</a>
+        </div>
+      </div>
+
       <!-- ВИД 8: ПОДДЕРЖКА -->
       <div class="view" id="v-support">
         <div class="sub-step on" id="sp-form">
@@ -719,11 +844,12 @@
     let el=$("v-"+v) ? v : "login";
     if((el==="register2"||el==="register3") && !$("r-name").value.trim()) el="register";
     document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+el));
-    document.querySelector(".layout").classList.toggle("legal-mode", el==="terms"||el==="privacy");
-    if(el==="terms"||el==="privacy") window.scrollTo(0,0);
-    const TITLES={register:"Регистрация",register2:"Регистрация",register3:"Регистрация",done:"Почта создана",restore:"Восстановление доступа",support:"Поддержка",terms:"Пользовательское соглашение",privacy:"Политика конфиденциальности",password:"Вход"};
+    const wide=["terms","privacy","about","ads"].includes(el);
+    document.querySelector(".layout").classList.toggle("legal-mode", wide);
+    if(wide) window.scrollTo(0,0);
+    const TITLES={register:"Регистрация",register2:"Регистрация",register3:"Регистрация",done:"Почта создана",restore:"Восстановление доступа",support:"Поддержка",terms:"Пользовательское соглашение",privacy:"Политика конфиденциальности",about:"О проекте",ads:"Реклама на сайте",password:"Вход"};
     document.title = (TITLES[el]||"Вход")+" — Хат.Почта";
-    const f=document.querySelector(".view.on .sub-step.on input:not([type=checkbox]):not([type=radio]), .view.on > form input:not([type=checkbox]):not([type=radio])"); if(f) setTimeout(()=>f.focus(),50);
+    const f=document.querySelector(".view.on .sub-step.on input:not([type=checkbox]):not([type=radio]), .view.on > form input:not([type=checkbox]):not([type=radio])"); if(f && !wide) setTimeout(()=>f.focus(),50);
     // картинка «я не робот» для восстановления и поддержки
     setTimeout(()=>{ if(window.onViewShown) window.onViewShown(el); },0);
   }
@@ -1065,6 +1191,33 @@
     }catch(err){
       note("rs-code-notice",err.message);
       if(err.status===410) setTimeout(restoreAgain,1800);
+    }finally{ btn.disabled=false; }
+  };
+
+  /* ===== ЗАЯВКА НА РЕКЛАМУ ===== */
+  CAPS.ad=null;
+  $("ad-cap-new").onclick=()=>loadCap("ad","ad-notice");
+  $("ad-cap").addEventListener("input",e=>{ e.target.value=e.target.value.replace(/\D/g,"").slice(0,5); });
+  const _ovs=window.onViewShown;
+  window.onViewShown=v=>{ _ovs(v); if(v==="ads" && $("ad-form-step").classList.contains("on") && !CAPS.ad) loadCap("ad","ad-notice"); };
+  $("f-ads").onsubmit=async e=>{
+    e.preventDefault();
+    note("ad-notice","");
+    const company=$("ad-company").value.trim(), name=$("ad-name").value.trim(), email=$("ad-email").value.trim(), text=$("ad-text").value.trim();
+    if(!company){ note("ad-notice","Укажите компанию или бренд"); return; }
+    if(!name){ note("ad-notice","Укажите, как к вам обращаться"); return; }
+    if(!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)){ note("ad-notice","Укажите почту, на которую вам ответить"); return; }
+    if(text.length<10){ note("ad-notice","Опишите, что хотите разместить (хотя бы пару слов)"); return; }
+    if($("ad-cap").value.length!==5){ $("ad-cap-box").classList.add("err"); note("ad-notice","Введите 5 цифр с картинки"); return; }
+    $("ad-cap-box").classList.remove("err");
+    const btn=$("ad-submit"); btn.disabled=true;
+    try{
+      await api("ads",{company,name,email,phone:$("ad-phone").value.trim(),place:$("ad-place").value,text,captcha_id:CAPS.ad,captcha:$("ad-cap").value});
+      document.querySelectorAll("#v-ads > .sub-step").forEach(x=>x.classList.toggle("on",x.id==="ad-done"));
+      window.scrollTo(0,0);
+    }catch(err){
+      note("ad-notice",err.message);
+      loadCap("ad","ad-notice");
     }finally{ btn.disabled=false; }
   };
 
