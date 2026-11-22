@@ -19,6 +19,7 @@
   hat_disk.py admin-tg [N] — куда слать предупреждения в Telegram (берёт из ящиков, подтверждённых ботом)
   hat_disk.py alert-test   — прислать пробное предупреждение
   hat_disk.py usage        — кто сколько занял
+  hat_disk.py notify ТЕКСТ — сообщение администратору (Telegram + почта), например о сбое резервной копии
 """
 
 import base64
@@ -729,6 +730,26 @@ def cmd_alert_test():
     return 0 if ok else 1
 
 
+def cmd_notify(text):
+    """Сообщение администратору в Telegram и на support@ (используют другие скрипты, например бэкап)."""
+    full = "⚠️ Сервер kazxat.kz\n\n" + text
+    sent = []
+    if CFG.get("admin_tg_chat") and CFG.get("bot_token"):
+        try:
+            tg_send(CFG["admin_tg_chat"], full)
+            sent.append("telegram")
+        except Exception as e:
+            print("telegram:", type(e).__name__)
+    if CFG.get("smtp_pass"):
+        try:
+            send_mail(CFG["support_to"], "⚠️ Сервер kazxat.kz: " + text.split("\n")[0][:80], full)
+            sent.append("почта")
+        except Exception as e:
+            print("почта:", type(e).__name__)
+    print("Отправлено:", ", ".join(sent) or "никуда (не настроено)")
+    return 0 if sent else 1
+
+
 def cmd_usage():
     path = os.path.join(CFG["disk_dir"], "disk.db")
     for p in (path, "/var/lib/private/hat-disk/disk.db"):
@@ -761,6 +782,8 @@ def main():
         return cmd_alert_test()
     elif c == "usage":
         return cmd_usage()
+    elif c == "notify":
+        return cmd_notify(" ".join(sys.argv[2:]) or "Проверка уведомлений")
     else:
         print(__doc__)
         return 2
