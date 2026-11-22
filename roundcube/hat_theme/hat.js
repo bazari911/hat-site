@@ -364,11 +364,14 @@
     if (!area || area.querySelector('.hat-disk')) return;
     diskToken().then(function () {
       disk.on = true;
+      // вместо «Максимальный размер файла 26 МБ» — понятная подпись
+      var rcHint = area.querySelector('.upload-form .hint');
+      if (rcHint) rcHint.textContent = 'Вложения до ' + diskSize(diskLimit()) + ', больше — через Хат Диск';
       var box = document.createElement('div');
       box.className = 'hat-disk';
       box.innerHTML = '<button type="button" class="btn btn-secondary hat-disk-btn">☁️ Большой файл — Хат Диск</button>' +
         '<input type="file" multiple hidden>' +
-        '<div class="hat-disk-hint">Файлы больше ' + diskSize(diskLimit()) + ' уходят ссылкой: до 2 ГБ, хранятся 30 дней.</div>' +
+        '<div class="hat-disk-hint">Хат Диск: файлы до 2 ГБ, хранятся 30 дней.</div>' +
         '<div class="hat-disk-usage"></div><ul class="hat-disk-list"></ul>';
       var btnRow = area.querySelector('.btn.attach');
       if (btnRow && btnRow.parentNode) btnRow.parentNode.insertBefore(box, btnRow.nextSibling);
@@ -378,8 +381,7 @@
       box.querySelector('.hat-disk-btn').onclick = function () { inp.value = ''; inp.click(); };
       inp.onchange = function () { for (var i = 0; i < inp.files.length; i++) diskStart(inp.files[i]); inp.value = ''; };
       diskInfo().then(function (d) {
-        box.querySelector('.hat-disk-hint').textContent = 'Файлы больше ' + diskSize(diskLimit()) + ' уходят ссылкой: до ' +
-          diskSize(d.max_file) + ', хранятся ' + d.days + ' дней.';
+        box.querySelector('.hat-disk-hint').textContent = 'Хат Диск: файлы до ' + diskSize(d.max_file) + ', хранятся ' + d.days + ' дней.';
       }).catch(function () {});
     }).catch(function () { /* диск не включён — почта работает как раньше */ });
 
