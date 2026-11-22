@@ -32,3 +32,6 @@ $config['support_url'] = 'https://kazxat.kz';
 $config['language'] = 'ru_RU';
 $config['username_domain'] = 'kazxat.kz';   // можно входить просто по имени, без @kazxat.kz
 $config['login_autocomplete'] = 2;
+
+// Максимальный размер письма: как в Postfix (data/conf/postfix/extra.cf: message_size_limit = 36700160, 35 МБ)
+$config['max_message_size'] = '35M';
