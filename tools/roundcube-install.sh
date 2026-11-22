@@ -261,6 +261,22 @@ pincheck)
   grep -h password_mailcow_api_host $RC/plugins/password/config.inc.php
   ;;
 
+quotainfo)
+  D=${2:-kazxat.kz}
+  echo "== quotainfo: read-only, domain $D"
+  echo "-- disk /:"; df -h /
+  echo "-- mail volumes:"; du -sh /var/lib/docker/volumes/*vmail* 2>/dev/null || echo "   none found"
+  echo "-- domain settings (GB):"
+  sql mailcow -e "SELECT domain, ROUND(quota/1073741824,2) AS domain_quota_gb, ROUND(defquota/1073741824,2) AS default_mailbox_gb, ROUND(maxquota/1073741824,2) AS max_mailbox_gb, mailboxes AS max_mailboxes, aliases AS max_aliases, active FROM domain WHERE domain='$D';"
+  echo "-- mailboxes (quota GB, used MB):"
+  sql mailcow -e "SELECT m.username, ROUND(m.quota/1073741824,2) AS quota_gb, ROUND(IFNULL(q.bytes,0)/1048576,1) AS used_mb, IFNULL(q.messages,0) AS msgs, m.active FROM mailbox m LEFT JOIN quota2 q ON q.username=m.username WHERE m.domain='$D' ORDER BY m.username;"
+  echo "-- postfix message_size_limit: $(docker exec $(docker ps -qf name=postfix-mailcow) postconf -h message_size_limit) bytes"
+  echo "-- mailcow.conf size settings:"; grep -n -i -E 'MAX_BODY|SIZE' mailcow.conf || echo "   none"
+  echo "-- nginx client_max_body_size:"; docker exec $NG sh -c "grep -rh client_max_body_size /etc/nginx 2>/dev/null | sort -u" || true
+  echo "-- php-fpm upload limits: $(docker exec $PHP php -r 'echo "upload_max_filesize=",ini_get("upload_max_filesize")," post_max_size=",ini_get("post_max_size");')"
+  echo "-- roundcube max_message_size: $(grep -h max_message_size $C $RC/config/defaults.inc.php 2>/dev/null | head -2 | tr '\n' ' ')"
+  ;;
+
 restart)
   echo "== restart mailcow (webmail down for 1-2 minutes)"
   docker compose down && docker compose up -d
@@ -271,5 +287,5 @@ mailboxes)
   sql mailcow -e "SELECT username, active FROM mailbox WHERE domain='kazxat.kz';"
   ;;
 
-*) echo "usage: $0 a|b|c|d|e|f|g|h|theme|pwinfo|password|apitest|netinfo|pinnginx|pincheck|restart|mailboxes" ;;
+*) echo "usage: $0 a|b|c|d|e|f|g|h|theme|pwinfo|password|apitest|netinfo|pinnginx|pincheck|quotainfo|restart|mailboxes" ;;
 esac
