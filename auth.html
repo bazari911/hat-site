@@ -155,12 +155,12 @@
   /* язык Соглашения и Политики: ҚАЗ или РУС (lang.js ставит <html lang="kk">) */
   html[lang="kk"] .legal-ru{display:none}
   html:not([lang="kk"]) .legal-kk{display:none}
-  .ad-table{width:100%;border-collapse:collapse;margin:4px 0 12px;font-size:14px}
-  .ad-table th,.ad-table td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
-  .ad-table th{background:#f1f9fb;color:var(--blue-deep);font-weight:700}
+  .rk-table{width:100%;border-collapse:collapse;margin:4px 0 12px;font-size:14px}
+  .rk-table th,.rk-table td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+  .rk-table th{background:#f1f9fb;color:var(--blue-deep);font-weight:700}
   .about-btns{display:flex;gap:12px;margin:18px 0 6px;flex-wrap:wrap}
   .about-btns .btn{width:auto;flex:1 1 200px}
-  #f-ads{margin-top:8px}
+  #f-rk{margin-top:8px}
   .view.legal .legal-also{margin-top:22px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted)}
   footer{background:var(--blue-deep);color:#cfeaf1;font-size:13px;padding:18px 0}
   footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
@@ -671,13 +671,13 @@
 
       <!-- ВИД 12: РЕКЛАМА НА САЙТЕ -->
       <div class="view legal" id="v-ads">
-        <div class="sub-step on" id="ad-form-step">
+        <div class="sub-step on" id="rk-form-step">
         <div class="legal-ru" data-noi18n>
           <a class="back" href="index.html">← На главную</a>
           <h2>Реклама на «Хат»</h2>
           <div class="sub">Разместите баннер на главной странице kazxat.kz — портала с почтой и новостями Казахстана. Цены — по запросу: напишите, что хотите разместить, и мы ответим на вашу почту с адреса reklama@kazxat.kz.</div>
           <h3>Рекламные места</h3>
-          <table class="ad-table"><thead><tr><th>Место</th><th>Размер, px</th><th>Где на странице</th></tr></thead><tbody>
+          <table class="rk-table"><thead><tr><th>Место</th><th>Размер, px</th><th>Где на странице</th></tr></thead><tbody>
             <tr><td>Верхний баннер</td><td>728×90 или 970×90</td><td>Вверху главной, над новостями</td></tr>
             <tr><td>Боковой баннер</td><td>300×400</td><td>Справа, рядом со входом в почту и погодой</td></tr>
             <tr><td>Баннер в ленте</td><td>728×120</td><td>Внутри ленты новостей</td></tr>
@@ -696,7 +696,7 @@
           <h2>«Хат» сайтындағы жарнама</h2>
           <div class="sub">kazxat.kz басты бетінде — поштасы мен Қазақстан жаңалықтары бар порталда баннер орналастырыңыз. Бағасы — сұраныс бойынша: не орналастырғыңыз келетінін жазыңыз, біз reklama@kazxat.kz мекенжайынан поштаңызға жауап береміз.</div>
           <h3>Жарнама орындары</h3>
-          <table class="ad-table"><thead><tr><th>Орын</th><th>Өлшемі, px</th><th>Беттегі орны</th></tr></thead><tbody>
+          <table class="rk-table"><thead><tr><th>Орын</th><th>Өлшемі, px</th><th>Беттегі орны</th></tr></thead><tbody>
             <tr><td>Жоғарғы баннер</td><td>728×90 немесе 970×90</td><td>Басты беттің жоғарғы жағында, жаңалықтардың үстінде</td></tr>
             <tr><td>Бүйір баннер</td><td>300×400</td><td>Оң жақта, поштаға кіру мен ауа райының жанында</td></tr>
             <tr><td>Лентадағы баннер</td><td>728×120</td><td>Жаңалықтар лентасының ішінде</td></tr>
@@ -710,35 +710,35 @@
           </ul>
           <h3>Өтінім</h3>
         </div>
-        <form id="f-ads" novalidate>
+        <form id="f-rk" novalidate>
           <div class="row2">
-            <div class="field"><label for="ad-company">Компания или бренд</label><div class="input"><input id="ad-company" maxlength="100" autocomplete="organization"></div></div>
-            <div class="field"><label for="ad-name">Как к вам обращаться</label><div class="input"><input id="ad-name" maxlength="60" autocomplete="name"></div></div>
+            <div class="field"><label for="rk-company">Компания или бренд</label><div class="input"><input id="rk-company" maxlength="100" autocomplete="organization"></div></div>
+            <div class="field"><label for="rk-name">Как к вам обращаться</label><div class="input"><input id="rk-name" maxlength="60" autocomplete="name"></div></div>
           </div>
           <div class="row2">
-            <div class="field"><label for="ad-email">Почта для ответа</label><div class="input"><input id="ad-email" type="email" autocomplete="email" placeholder="name@company.kz"></div></div>
-            <div class="field"><label for="ad-phone">Телефон <span style="font-weight:400;color:var(--muted)">(необязательно)</span></label><div class="input"><input id="ad-phone" type="tel" maxlength="30" autocomplete="tel" placeholder="+7"></div></div>
+            <div class="field"><label for="rk-email">Почта для ответа</label><div class="input"><input id="rk-email" type="email" autocomplete="email" placeholder="name@company.kz"></div></div>
+            <div class="field"><label for="rk-phone">Телефон <span style="font-weight:400;color:var(--muted)">(необязательно)</span></label><div class="input"><input id="rk-phone" type="tel" maxlength="30" autocomplete="tel" placeholder="+7"></div></div>
           </div>
           <div class="field">
-            <label for="ad-place">Какое место интересует</label>
-            <div class="input"><select id="ad-place">
+            <label for="rk-place">Какое место интересует</label>
+            <div class="input"><select id="rk-place">
               <option value="Верхний баннер 728×90 / 970×90">Верхний баннер 728×90 / 970×90</option>
               <option value="Боковой баннер 300×400">Боковой баннер 300×400</option>
               <option value="Баннер в ленте новостей 728×120">Баннер в ленте новостей 728×120</option>
               <option value="Другое / пока не знаю">Другое / пока не знаю</option>
             </select></div>
           </div>
-          <div class="field"><label for="ad-text">Что хотите разместить</label><div class="input"><textarea id="ad-text" rows="4" maxlength="3000" placeholder="Товар или услуга, сроки, бюджет"></textarea></div></div>
+          <div class="field"><label for="rk-text">Что хотите разместить</label><div class="input"><textarea id="rk-text" rows="4" maxlength="3000" placeholder="Товар или услуга, сроки, бюджет"></textarea></div></div>
           <div class="field">
-            <label for="ad-cap">Я не робот: введите цифры с картинки</label>
-            <div class="cap"><img id="ad-cap-img" alt="Цифры для проверки"><button type="button" class="linkbtn" id="ad-cap-new">Другая картинка</button></div>
-            <div class="input" id="ad-cap-box"><input id="ad-cap" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="5 цифр"></div>
+            <label for="rk-cap">Я не робот: введите цифры с картинки</label>
+            <div class="cap"><img id="rk-cap-img" alt="Цифры для проверки"><button type="button" class="linkbtn" id="rk-cap-new">Другая картинка</button></div>
+            <div class="input" id="rk-cap-box"><input id="rk-cap" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="5 цифр"></div>
           </div>
-          <div class="notice err" id="ad-notice"></div>
-          <button class="btn btn-blue" id="ad-submit">Отправить заявку</button>
+          <div class="notice err" id="rk-notice"></div>
+          <button class="btn btn-blue" id="rk-submit">Отправить заявку</button>
         </form>
         </div>
-        <div class="sub-step done" id="ad-done">
+        <div class="sub-step done" id="rk-done">
           <svg class="done-ico" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#e3f6fa"/><path d="M19 33l9 9 17-19" fill="none" stroke="#1e9e55" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <h2>Заявка отправлена</h2>
           <div class="sub">Мы ответим на указанную почту с адреса reklama@kazxat.kz.</div>
@@ -1195,29 +1195,29 @@
   };
 
   /* ===== ЗАЯВКА НА РЕКЛАМУ ===== */
-  CAPS.ad=null;
-  $("ad-cap-new").onclick=()=>loadCap("ad","ad-notice");
-  $("ad-cap").addEventListener("input",e=>{ e.target.value=e.target.value.replace(/\D/g,"").slice(0,5); });
+  CAPS.rk=null;
+  $("rk-cap-new").onclick=()=>loadCap("rk","rk-notice");
+  $("rk-cap").addEventListener("input",e=>{ e.target.value=e.target.value.replace(/\D/g,"").slice(0,5); });
   const _ovs=window.onViewShown;
-  window.onViewShown=v=>{ _ovs(v); if(v==="ads" && $("ad-form-step").classList.contains("on") && !CAPS.ad) loadCap("ad","ad-notice"); };
-  $("f-ads").onsubmit=async e=>{
+  window.onViewShown=v=>{ _ovs(v); if(v==="ads" && $("rk-form-step").classList.contains("on") && !CAPS.rk) loadCap("rk","rk-notice"); };
+  $("f-rk").onsubmit=async e=>{
     e.preventDefault();
-    note("ad-notice","");
-    const company=$("ad-company").value.trim(), name=$("ad-name").value.trim(), email=$("ad-email").value.trim(), text=$("ad-text").value.trim();
-    if(!company){ note("ad-notice","Укажите компанию или бренд"); return; }
-    if(!name){ note("ad-notice","Укажите, как к вам обращаться"); return; }
-    if(!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)){ note("ad-notice","Укажите почту, на которую вам ответить"); return; }
-    if(text.length<10){ note("ad-notice","Опишите, что хотите разместить (хотя бы пару слов)"); return; }
-    if($("ad-cap").value.length!==5){ $("ad-cap-box").classList.add("err"); note("ad-notice","Введите 5 цифр с картинки"); return; }
-    $("ad-cap-box").classList.remove("err");
-    const btn=$("ad-submit"); btn.disabled=true;
+    note("rk-notice","");
+    const company=$("rk-company").value.trim(), name=$("rk-name").value.trim(), email=$("rk-email").value.trim(), text=$("rk-text").value.trim();
+    if(!company){ note("rk-notice","Укажите компанию или бренд"); return; }
+    if(!name){ note("rk-notice","Укажите, как к вам обращаться"); return; }
+    if(!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)){ note("rk-notice","Укажите почту, на которую вам ответить"); return; }
+    if(text.length<10){ note("rk-notice","Опишите, что хотите разместить (хотя бы пару слов)"); return; }
+    if($("rk-cap").value.length!==5){ $("rk-cap-box").classList.add("err"); note("rk-notice","Введите 5 цифр с картинки"); return; }
+    $("rk-cap-box").classList.remove("err");
+    const btn=$("rk-submit"); btn.disabled=true;
     try{
-      await api("ads",{company,name,email,phone:$("ad-phone").value.trim(),place:$("ad-place").value,text,captcha_id:CAPS.ad,captcha:$("ad-cap").value});
-      document.querySelectorAll("#v-ads > .sub-step").forEach(x=>x.classList.toggle("on",x.id==="ad-done"));
+      await api("ads",{company,name,email,phone:$("rk-phone").value.trim(),place:$("rk-place").value,text,captcha_id:CAPS.rk,captcha:$("rk-cap").value});
+      document.querySelectorAll("#v-ads > .sub-step").forEach(x=>x.classList.toggle("on",x.id==="rk-done"));
       window.scrollTo(0,0);
     }catch(err){
-      note("ad-notice",err.message);
-      loadCap("ad","ad-notice");
+      note("rk-notice",err.message);
+      loadCap("rk","rk-notice");
     }finally{ btn.disabled=false; }
   };
 
