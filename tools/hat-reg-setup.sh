@@ -88,9 +88,9 @@ block = """
         proxy_read_timeout 70s;
         client_max_body_size 16k;
     }
-    # служебные скрипты сайта наружу не отдаём
-    location ^~ /tools/ { return 404; }
 """
+if "/tools/" not in s:
+    block += "    # служебные скрипты сайта наружу не отдаём\n    location ^~ /tools/ { return 404; }\n"
 new, n = re.subn(r"(^[ \t]*root[ \t]+/hat-site/?;[^\n]*\n)", lambda m: m.group(1) + block, s, flags=re.M)
 if n == 0:
     raise SystemExit("Не нашёл строку 'root /hat-site;' — ничего не менял")
