@@ -195,9 +195,27 @@
     head.parentNode.insertBefore(a, head.nextSibling);
   }
 
+  /* Страница входа: «Забыли пароль?» слева и «Поддержка» справа — одной ровной строкой под «Войти» */
+  function addLoginLinks() {
+    var form = document.getElementById('login-form');
+    if (!form || form.querySelector('.hat-login-links')) return;
+    var row = document.createElement('div');
+    row.className = 'hat-login-links';
+    row.innerHTML = '<a href="https://kazxat.kz/auth.html#restore">Забыли пароль?</a>' +
+                    '<a href="https://kazxat.kz/auth.html#support">Поддержка</a>';
+    var btns = form.querySelector('.formbuttons');
+    if (btns && btns.parentNode) btns.parentNode.insertBefore(row, btns.nextSibling);
+    else form.appendChild(row);
+    var reg = document.createElement('div');
+    reg.className = 'hat-login-reg';
+    reg.innerHTML = 'Нет почты? <a href="https://kazxat.kz/auth.html#register">Создать ящик @kazxat.kz</a>';
+    row.parentNode.insertBefore(reg, row.nextSibling);
+  }
+
   var done = false;
   function init() {
     if (done) return; done = true;
+    addLoginLinks();
     if (document.getElementById('layout-sidebar')) document.body.classList.add('hat-has-sidebar');
     addHomeLinks();
     addCompose();

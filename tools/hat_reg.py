@@ -7,7 +7,9 @@
   * код подтверждения на другую почту (через ящик noreply@kazxat.kz);
   * своя картинка-капча (цифры нарисованы линиями, текста в SVG нет);
   * лимиты на IP, номер, почту;
-  * создание ящика через API mailcow.
+  * создание ящика через API mailcow;
+  * «Забыли пароль?»: код в Telegram (или на резервную почту), новый пароль через API mailcow;
+  * форма поддержки: письмо на support@kazxat.kz.
 
 Секреты лежат только в /etc/hat-reg/config.json (права 600). В журнал не пишутся.
 
@@ -16,6 +18,7 @@
   hat_reg.py selftest         — проверка бота, API mailcow и почты, без изменений
   hat_reg.py create-noreply   — создать ящик noreply@kazxat.kz для писем с кодами
   hat_reg.py domain-limits N  — показать/поднять лимит ящиков домена до N
+  hat_reg.py support-alias ЯЩИК — направить support@kazxat.kz на ЯЩИК (например zharkyn@kazxat.kz)
 """
 
 import base64
@@ -66,7 +69,13 @@ DEFAULT_LIMITS = {
     "code_ttl": 900,              # код действует 15 минут
     "code_tries": 5,              # попыток ввести код
     "resend_after": 60,           # повторная отправка не раньше, сек
+    "reset_per_ip_day": 10,       # запросов «Забыли пароль?» с одного IP в сутки
+    "reset_per_addr_hour": 3,     # кодов восстановления на один ящик в час
+    "support_per_ip_day": 5,      # сообщений в поддержку с одного IP в сутки
 }
+
+SUPPORT_TOPICS = ("Не могу войти", "Восстановление пароля", "Регистрация", "Письма не приходят",
+                  "Спам или мошенничество", "Предложение", "Другое")
 
 log_lock = threading.Lock()
 
@@ -94,6 +103,7 @@ def load_config():
     cfg.setdefault("smtp_user", "noreply@" + DOMAIN)
     cfg.setdefault("quota_mb", 3072)
     cfg.setdefault("bot_name", "kazxat_kz_bot")
+    cfg.setdefault("support_to", "support@" + DOMAIN)
     cfg.setdefault("db", os.path.join(os.environ.get("STATE_DIRECTORY", "/var/lib/hat-reg"), "reg.db"))
     lim = dict(DEFAULT_LIMITS)
     lim.update(cfg.get("limits") or {})
@@ -140,6 +150,10 @@ def db():
         CREATE TABLE IF NOT EXISTS events(kind TEXT, k TEXT, ts INT);
         CREATE INDEX IF NOT EXISTS e_k ON events(kind, k, ts);
         CREATE TABLE IF NOT EXISTS kv(k TEXT PRIMARY KEY, v TEXT);
+        CREATE TABLE IF NOT EXISTS resets(
+          rid TEXT PRIMARY KEY, created INT, ip TEXT, address TEXT, method TEXT,
+          code_hash TEXT, tries INT DEFAULT 0, done INT DEFAULT 0);
+        CREATE INDEX IF NOT EXISTS r_addr ON resets(address);
         """)
     return _db
 
@@ -165,6 +179,7 @@ def cleanup():
     now = int(time.time())
     q("DELETE FROM sessions WHERE created<?", (now - 2 * 86400,))
     q("DELETE FROM captcha WHERE created<?", (now - 1800,))
+    q("DELETE FROM resets WHERE created<?", (now - 2 * 86400,))
     q("DELETE FROM events WHERE ts<?", (now - 3 * 86400,))
 
 
@@ -227,13 +242,26 @@ def add_mailbox(local, name, password, quota_mb):
     return api_ok(api("POST", "add/mailbox", body))
 
 
+def set_mailbox_password(addr, password):
+    body = {"items": [addr], "attr": {"password": password, "password2": password}}
+    return api_ok(api("POST", "edit/mailbox", body))
+
+
+def alias_exists(addr):
+    r = api("GET", "get/alias/all")
+    return any(isinstance(a, dict) and str(a.get("address", "")).lower() == addr.lower()
+               for a in (r if isinstance(r, list) else []))
+
+
 # ----------------------------------------------------------------- почта с кодом
 
-def send_mail(to, subject, text):
+def send_mail(to, subject, text, reply_to=None):
     msg = EmailMessage()
     msg["From"] = formataddr(("Хат Почта", CFG["smtp_user"]))
     msg["To"] = to
     msg["Subject"] = subject
+    if reply_to:
+        msg["Reply-To"] = reply_to
     msg["Message-ID"] = make_msgid(domain=DOMAIN)
     msg.set_content(text)
     with smtplib.SMTP(CFG["smtp_host"], CFG["smtp_port"], timeout=25) as s:
@@ -251,6 +279,19 @@ def code_letter(code, login):
         f"Растау коды: {code}\n"
         f"{login}@{DOMAIN} поштасын тіркеу үшін кодты тіркеу бетіне енгізіңіз. "
         f"Код 15 минут жарамды. Егер бұл сіз болмасаңыз, хатты өшіріп тастаңыз.\n\n"
+        f"— Хат Почта, https://kazxat.kz\n"
+    )
+
+
+def reset_letter(code, addr):
+    return (
+        f"Код для смены пароля: {code}\n\n"
+        f"Кто-то (возможно, вы) восстанавливает пароль от ящика {addr}. "
+        f"Введите код на странице восстановления. Код действует 15 минут.\n"
+        f"Если это были не вы, никому не сообщайте код и просто удалите письмо.\n\n"
+        f"Құпиясөзді өзгерту коды: {code}\n"
+        f"{addr} поштасының құпиясөзін қалпына келтіру үшін кодты енгізіңіз. "
+        f"Код 15 минут жарамды. Егер бұл сіз болмасаңыз, кодты ешкімге айтпаңыз.\n\n"
         f"— Хат Почта, https://kazxat.kz\n"
     )
 
@@ -394,13 +435,16 @@ def tg(method, **params):
 
 
 def tg_send(chat, text, markup=None):
+    """Отправить сообщение в Telegram. True — дошло, False — нет (бот заблокирован и т.п.)."""
     try:
         p = {"chat_id": chat, "text": text, "disable_web_page_preview": True}
         if markup is not None:
             p["reply_markup"] = markup
         tg("sendMessage", **p)
+        return True
     except Exception as e:  # noqa
         log("tg send error:", type(e).__name__)
+        return False
 
 
 SHARE_KB = {"keyboard": [[{"text": "Поделиться номером", "request_contact": True}]],
@@ -683,6 +727,158 @@ def do_check(ip, params):
     return {"ok": True}
 
 
+# ----------------------------------------------------------------- «Забыли пароль?»
+
+
+def mask_email(e):
+    local, _, dom = e.partition("@")
+    return (local[:1] + "***" if len(local) > 1 else "***") + "@" + dom
+
+
+def reset_row(rid):
+    if not rid or not isinstance(rid, str):
+        return None
+    r = q("SELECT * FROM resets WHERE rid=?", (rid,), one=True)
+    if not r or r["done"] or time.time() - r["created"] > CFG["limits"]["code_ttl"]:
+        return None
+    return r
+
+
+def do_forgot(ip, b):
+    """Шаг 1: адрес + капча → код в Telegram (или на резервную почту)."""
+    lim = CFG["limits"]
+    login = str(b.get("login") or "").strip().lower()
+    if login.endswith("@" + DOMAIN):
+        login = login[: -len(DOMAIN) - 1]
+    if not login or not LOGIN_RE.match(login):
+        raise Err("Проверьте адрес почты")
+    if ev_count("rs_ip", ip, 86400) >= lim["reset_per_ip_day"]:
+        raise Err("Слишком много попыток. Попробуйте завтра.", 429)
+    if not check_captcha(b.get("captcha_id"), b.get("captcha")):
+        raise Err("Неверные цифры с картинки, попробуйте ещё раз", 400, {"captcha": True})
+    ev_add("rs_ip", ip)
+    addr = f"{login}@{DOMAIN}"
+    acc = q("SELECT * FROM accounts WHERE address=?", (addr,), one=True)
+    if not acc or (not acc["tg_chat"] and not acc["ext_email"]):
+        if acc or mailbox_exists(addr):
+            raise Err("К этому ящику не привязан ни Telegram, ни резервная почта, поэтому сменить пароль "
+                      "самостоятельно нельзя. Напишите в поддержку — поможем.", 404, {"support": True})
+        raise Err("Такого ящика нет. Проверьте адрес.", 404)
+    if ev_count("rs_addr", addr, 3600) >= lim["reset_per_addr_hour"]:
+        raise Err("Код для этого ящика уже отправляли несколько раз. Попробуйте через час.", 429)
+
+    code = "%06d" % secrets.randbelow(1000000)
+    rid = secrets.token_urlsafe(24)
+    method, to = None, None
+    if acc["tg_chat"]:
+        ok = tg_send(acc["tg_chat"],
+                     f"Код для смены пароля от ящика {addr}: {code}\n\n"
+                     "Введите его на странице восстановления. Код действует 15 минут. "
+                     "Никому его не сообщайте. Если это были не вы — просто ничего не делайте.\n\n"
+                     f"Құпиясөзді өзгерту коды: {code}. Кодты ешкімге айтпаңыз.", NO_KB)
+        if ok:
+            method, to = "tg", "@" + CFG["bot_name"]
+    if not method and acc["ext_email"]:
+        try:
+            send_mail(acc["ext_email"], f"Код для смены пароля Хат Почты: {code}", reset_letter(code, addr))
+            method, to = "email", mask_email(acc["ext_email"])
+        except Exception as e:
+            log("smtp error (reset):", type(e).__name__, str(e)[:200])
+    if not method:
+        if acc["tg_chat"]:
+            raise Err("Не получилось отправить код в Telegram. Откройте бота @" + CFG["bot_name"] +
+                      ", нажмите «Запустить» (или «Разблокировать») и попробуйте ещё раз.", 502)
+        raise Err("Не получилось отправить письмо с кодом. Попробуйте позже.", 502)
+
+    ev_add("rs_addr", addr)
+    q("INSERT INTO resets(rid,created,ip,address,method,code_hash) VALUES(?,?,?,?,?,?)",
+      (rid, int(time.time()), ip, addr, method, H("reset", rid, code)))
+    log("код восстановления отправлен", addr, "через", method)
+    return {"rid": rid, "method": method, "to": to, "address": addr}
+
+
+RESET_LOCK = threading.Lock()
+
+
+def do_reset(ip, b):
+    """Шаг 2: код + новый пароль → пароль меняется в mailcow."""
+    lim = CFG["limits"]
+    with RESET_LOCK:
+        r = reset_row(b.get("rid"))
+        if not r:
+            raise Err("Код устарел. Запросите новый.", 410)
+        if r["tries"] >= lim["code_tries"]:
+            raise Err("Слишком много неверных попыток. Запросите новый код.", 429)
+        pe = password_error(b.get("password"))
+        if pe:
+            raise Err(pe)
+        code = re.sub(r"\D", "", str(b.get("code") or ""))
+        q("UPDATE resets SET tries=tries+1 WHERE rid=?", (r["rid"],))
+        if not hmac.compare_digest(r["code_hash"], H("reset", r["rid"], code)):
+            left = lim["code_tries"] - r["tries"] - 1
+            raise Err("Неверный код" + (f" (осталось попыток: {left})" if left > 0 else ". Запросите новый код."))
+        addr = r["address"]
+        ok, why = set_mailbox_password(addr, b["password"])
+        if not ok:
+            log("reset password failed:", addr, why[:300])
+            if "password" in why.lower():
+                raise Err("Сервер не принял пароль: сделайте его сложнее", 400)
+            raise Err("Не удалось сменить пароль. Попробуйте позже или напишите в поддержку.", 502)
+        # этот и все другие коды для ящика больше не действуют
+        q("UPDATE resets SET done=1 WHERE address=?", (addr,))
+        log("пароль изменён через восстановление", addr, "способ", r["method"])
+    acc = q("SELECT tg_chat FROM accounts WHERE address=?", (addr,), one=True)
+    if acc and acc["tg_chat"]:
+        tg_send(acc["tg_chat"], f"Пароль от ящика {addr} изменён. Если это были не вы — "
+                                "сразу напишите в поддержку: https://kazxat.kz/auth.html#support", NO_KB)
+    return {"ok": True, "address": addr}
+
+
+# ----------------------------------------------------------------- поддержка
+
+
+def clean_text(s, n):
+    s = str(s or "").replace("\r\n", "\n").replace("\r", "\n")
+    s = re.sub(r"[\x00-\x08\x0b-\x1f\x7f]", "", s)
+    return re.sub(r"\n{4,}", "\n\n\n", s).strip()[:n]
+
+
+def do_support(ip, b):
+    lim = CFG["limits"]
+    name = clean_name(b.get("name"))
+    email = str(b.get("email") or "").strip()
+    box = str(b.get("box") or "").strip().lower()
+    topic = b.get("topic") if b.get("topic") in SUPPORT_TOPICS else "Другое"
+    text = clean_text(b.get("text"), 3000)
+    if not name:
+        raise Err("Укажите, как к вам обращаться")
+    if not EMAIL_RE.match(email):
+        raise Err("Укажите почту, на которую вам ответить")
+    if box and not re.fullmatch(r"[a-z0-9._-]{1,30}(@" + re.escape(DOMAIN) + ")?", box):
+        raise Err("Проверьте адрес вашего ящика @kazxat.kz")
+    if box and "@" not in box:
+        box += "@" + DOMAIN
+    if len(text) < 10:
+        raise Err("Опишите вопрос подробнее (хотя бы пару слов)")
+    if ev_count("sup_ip", ip, 86400) >= lim["support_per_ip_day"]:
+        raise Err("Вы уже отправили несколько сообщений сегодня. Мы ответим на них — подождите, пожалуйста.", 429)
+    if not check_captcha(b.get("captcha_id"), b.get("captcha")):
+        raise Err("Неверные цифры с картинки, попробуйте ещё раз", 400, {"captcha": True})
+    body = (f"Сообщение с формы поддержки kazxat.kz\n\n"
+            f"Тема: {topic}\nИмя: {name}\nОтветить на: {email}\n"
+            f"Ящик @kazxat.kz: {box or '—'}\n"
+            f"Время: {time.strftime('%Y-%m-%d %H:%M')}\nIP: {ip}\n\n"
+            f"{text}\n\n— Чтобы ответить, нажмите «Ответить»: письмо уйдёт на {email}\n")
+    try:
+        send_mail(CFG["support_to"], f"[Поддержка] {topic} — {name}", body, reply_to=email)
+    except Exception as e:
+        log("smtp error (support):", type(e).__name__, str(e)[:200])
+        raise Err("Не удалось отправить сообщение. Попробуйте позже.", 502)
+    ev_add("sup_ip", ip)
+    log("сообщение в поддержку, тема:", topic)
+    return {"ok": True}
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "hat-reg"
     sys_version = ""
@@ -745,7 +941,7 @@ class Handler(BaseHTTPRequestHandler):
             n = int(self.headers.get("Content-Length") or 0)
         except ValueError:
             n = 0
-        if n <= 0 or n > 8192:
+        if n <= 0 or n > 16000:
             return self.reply(400, {"error": "bad request"})
         try:
             b = json.loads(self.rfile.read(n))
@@ -754,7 +950,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(400, {"error": "bad request"})
         r = self.route()
         fn = {"start": do_start, "code": do_code, "create": do_create,
-              "resend": lambda ip, b: send_code(b.get("sid"), ip)}.get(r)
+              "resend": lambda ip, b: send_code(b.get("sid"), ip),
+              "forgot": do_forgot, "reset": do_reset, "support": do_support}.get(r)
         if not fn:
             return self.reply(404, {"error": "not found"})
         self.run(fn, b)
@@ -806,6 +1003,32 @@ def cmd_selftest():
             print("SMTP: ОШИБКА", type(e).__name__)
     else:
         print("SMTP: ящик noreply ещё не создан (create-noreply)")
+    try:
+        sup = CFG["support_to"]
+        if mailbox_exists(sup) or alias_exists(sup):
+            print("Поддержка: письма уходят на %s — OK" % sup)
+        else:
+            ok = False
+            print("Поддержка: адреса %s нет. Запустите: hat_reg.py support-alias ВАШ_ЯЩИК" % sup)
+    except Exception as e:
+        ok = False
+        print("Поддержка: ОШИБКА проверки", type(e).__name__)
+    return 0 if ok else 1
+
+
+def cmd_support_alias(target=None):
+    sup = CFG["support_to"]
+    if not target or not EMAIL_RE.match(target):
+        print("Укажите ящик, куда пересылать письма поддержки, например: support-alias zharkyn@kazxat.kz")
+        return 2
+    if mailbox_exists(sup):
+        print("%s — это отдельный ящик, письма поддержки приходят в него. Ничего не меняю." % sup)
+        return 0
+    if alias_exists(sup):
+        print("Пересылка %s уже есть. Ничего не меняю." % sup)
+        return 0
+    ok, why = api_ok(api("POST", "add/alias", {"address": sup, "goto": target, "active": "1"}))
+    print(("Готово: письма на %s теперь приходят в %s" % (sup, target)) if ok else ("Ошибка: " + why))
     return 0 if ok else 1
 
 
@@ -863,6 +1086,8 @@ def main():
         return cmd_create_noreply()
     elif c == "domain-limits":
         return cmd_domain_limits(sys.argv[2] if len(sys.argv) > 2 else None)
+    elif c == "support-alias":
+        return cmd_support_alias(sys.argv[2] if len(sys.argv) > 2 else None)
     else:
         print(__doc__)
         return 2

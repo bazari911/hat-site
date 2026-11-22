@@ -8,6 +8,8 @@
 #   limits N  — поднять лимит ящиков домена до N (без N — только показать)
 #   service   — установить и запустить службу hat-reg
 #   nginx     — добавить /api/reg/ в hat-site.conf (с копией и проверкой nginx -t)
+#   support ЯЩИК — письма на support@kazxat.kz пересылать в ЯЩИК (например zharkyn@kazxat.kz)
+#   restart   — перезапустить службу после обновления кода (git pull)
 #   test      — проверить всё целиком
 #   logs      — последние записи журнала службы
 set -euo pipefail
@@ -104,6 +106,15 @@ PYEOF
     cp -a "$BAK" "$NGX"; echo "nginx -t не прошёл — вернул прежний файл"; exit 1
   fi
   ;;
+support)
+  $PY support-alias ${2:-}
+  ;;
+restart)
+  systemctl restart hat-reg
+  sleep 3
+  systemctl is-active hat-reg
+  journalctl -u hat-reg --no-pager -n 5 -o cat
+  ;;
 test)
   $PY selftest || true
   echo "--- служба:"; systemctl is-active hat-reg || true
@@ -117,6 +128,6 @@ logs)
   journalctl -u hat-reg --no-pager -n "${2:-40}" -o short-iso
   ;;
 *)
-  sed -n '2,15p' "$0"
+  sed -n '2,17p' "$0"
   ;;
 esac

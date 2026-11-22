@@ -69,6 +69,7 @@
   .row3{display:grid;grid-template-columns:100px 1fr 110px;gap:8px}
   .row2>*,.row3>*{min-width:0}
   .input select{padding:12px 8px;cursor:pointer}
+  .input textarea{flex:1;min-width:0;border:none;outline:none;background:transparent;padding:12px 14px;font:inherit;color:var(--text);resize:vertical;min-height:110px}
   .err-box{background:#fdecec;color:#a42a2a;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:14px}
   .err-box:empty{display:none}
   .hint{font-size:12px;margin-top:5px;color:var(--muted);min-height:16px}
@@ -96,7 +97,8 @@
   .btn-gold:hover{background:var(--gold-dark)}
   .btn-ghost{background:none;border:1.5px solid var(--line);color:var(--text);margin-top:10px}
   .btn-ghost:hover{border-color:var(--blue)}
-  .links{display:flex;justify-content:space-between;font-size:14px;margin-top:16px}
+  .links{display:flex;justify-content:space-between;align-items:center;font-size:14px;margin-top:16px}
+  .links .linkbtn{font-size:14px}
   .divider{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px;margin:20px 0}
   .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
 
@@ -359,21 +361,112 @@
 
       <!-- ВИД 7: ВОССТАНОВЛЕНИЕ ПАРОЛЯ -->
       <div class="view" id="v-restore">
-        <a class="back" href="https://mail.kazxat.kz/rc/">← Ко входу</a>
-        <h2>Восстановление доступа</h2>
-        <div class="sub">Восстановление через Telegram и резервную почту скоро заработает</div>
-        <div class="notice info" id="rs-notice"></div>
-        <form id="f-restore" novalidate>
-          <div class="field">
-            <label for="rs-user">Почта</label>
-            <div class="input"><input id="rs-user" placeholder="имя"><span class="suffix">@kazxat.kz</span></div>
-          </div>
-          <div class="field">
-            <label for="rs-phone">Номер телефона</label>
-            <div class="input"><span class="prefix">+7</span><input id="rs-phone" type="tel" placeholder="(___) ___-__-__"></div>
-          </div>
-          <button class="btn btn-blue">Получить код</button>
-        </form>
+
+        <!-- 7а: адрес ящика -->
+        <div class="sub-step on" id="rs-ask">
+          <a class="back" href="https://mail.kazxat.kz/rc/">← Ко входу</a>
+          <h2>Восстановление доступа</h2>
+          <div class="sub">Пришлём код в Telegram или на резервную почту, которые вы указали при регистрации</div>
+          <form id="f-restore" novalidate>
+            <div class="field">
+              <label for="rs-user">Почта</label>
+              <div class="input" id="rs-user-box"><input id="rs-user" autocomplete="username" placeholder="имя"><span class="suffix">@kazxat.kz</span></div>
+            </div>
+            <div class="field">
+              <label for="rs-cap">Я не робот: введите цифры с картинки</label>
+              <div class="cap"><img id="rs-cap-img" alt="Цифры для проверки"><button type="button" class="linkbtn" id="rs-cap-new">Другая картинка</button></div>
+              <div class="input" id="rs-cap-box"><input id="rs-cap" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="5 цифр"></div>
+            </div>
+            <div class="notice err" id="rs-notice"></div>
+            <button class="btn btn-blue" id="rs-submit">Получить код</button>
+          </form>
+          <div class="links"><a href="https://mail.kazxat.kz/rc/">Вспомнил пароль</a><a href="#support">Поддержка</a></div>
+        </div>
+
+        <!-- 7б: код и новый пароль -->
+        <div class="sub-step" id="rs-code">
+          <button class="back" type="button" onclick="restoreAgain()">← Назад</button>
+          <h2>Придумайте новый пароль</h2>
+          <div class="sub" id="rs-sent">Мы отправили код</div>
+          <div class="chip"><span id="rs-to" data-noi18n></span></div>
+          <form id="f-reset" novalidate>
+            <div class="field">
+              <label for="rs-codein">Код из 6 цифр</label>
+              <div class="input"><input id="rs-codein" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></div>
+            </div>
+            <div class="field">
+              <label for="rs-pass">Новый пароль</label>
+              <div class="input"><input type="password" id="rs-pass" autocomplete="new-password"><button type="button" class="eye" data-for="rs-pass">👁</button></div>
+              <div class="hint">Не меньше 8 символов: латинские буквы и цифры</div>
+            </div>
+            <div class="field">
+              <label for="rs-pass2">Повторите пароль</label>
+              <div class="input" id="rs-pass2-box"><input type="password" id="rs-pass2" autocomplete="new-password"></div>
+            </div>
+            <div class="notice err" id="rs-code-notice"></div>
+            <button class="btn btn-blue" id="rs-save">Сменить пароль</button>
+          </form>
+          <div class="links"><button type="button" class="linkbtn" onclick="restoreAgain()">Код не пришёл</button><a href="#support">Поддержка</a></div>
+        </div>
+
+        <!-- 7в: готово -->
+        <div class="sub-step done" id="rs-done">
+          <svg class="done-ico" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#e3f6fa"/><path d="M19 33l9 9 17-19" fill="none" stroke="#1e9e55" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <h2>Пароль изменён</h2>
+          <div class="sub">Теперь войдите с новым паролем</div>
+          <div class="addr" id="rs-addr" data-noi18n></div>
+          <a class="btn btn-blue" href="https://mail.kazxat.kz/rc/">Войти в почту</a>
+        </div>
+      </div>
+
+      <!-- ВИД 8: ПОДДЕРЖКА -->
+      <div class="view" id="v-support">
+        <div class="sub-step on" id="sp-form">
+          <a class="back" href="https://mail.kazxat.kz/rc/">← Ко входу</a>
+          <h2>Поддержка</h2>
+          <div class="sub">Напишите, что случилось, — ответим на указанную почту</div>
+          <form id="f-support" novalidate>
+            <div class="field"><label for="sp-name">Как к вам обращаться</label><div class="input"><input id="sp-name" autocomplete="name" maxlength="60"></div></div>
+            <div class="field">
+              <label for="sp-email">Почта для ответа</label>
+              <div class="input"><input id="sp-email" type="email" autocomplete="email" placeholder="name@gmail.com"></div>
+              <div class="hint">Если не можете войти в ящик @kazxat.kz — укажите другую почту</div>
+            </div>
+            <div class="field">
+              <label for="sp-box">Ваш ящик @kazxat.kz <span style="font-weight:400;color:var(--muted)">(если есть)</span></label>
+              <div class="input"><input id="sp-box" autocomplete="off" placeholder="имя"><span class="suffix">@kazxat.kz</span></div>
+            </div>
+            <div class="field">
+              <label for="sp-topic">Тема</label>
+              <div class="input"><select id="sp-topic">
+                <option value="Не могу войти">Не могу войти</option>
+                <option value="Восстановление пароля">Восстановление пароля</option>
+                <option value="Регистрация">Регистрация</option>
+                <option value="Письма не приходят">Письма не приходят</option>
+                <option value="Спам или мошенничество">Спам или мошенничество</option>
+                <option value="Предложение">Предложение</option>
+                <option value="Другое">Другое</option>
+              </select></div>
+            </div>
+            <div class="field">
+              <label for="sp-text">Сообщение</label>
+              <div class="input"><textarea id="sp-text" rows="5" maxlength="3000"></textarea></div>
+            </div>
+            <div class="field">
+              <label for="sp-cap">Я не робот: введите цифры с картинки</label>
+              <div class="cap"><img id="sp-cap-img" alt="Цифры для проверки"><button type="button" class="linkbtn" id="sp-cap-new">Другая картинка</button></div>
+              <div class="input" id="sp-cap-box"><input id="sp-cap" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="5 цифр"></div>
+            </div>
+            <div class="notice err" id="sp-notice"></div>
+            <button class="btn btn-blue" id="sp-submit">Отправить</button>
+          </form>
+        </div>
+        <div class="sub-step done" id="sp-done">
+          <svg class="done-ico" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#e3f6fa"/><path d="M19 33l9 9 17-19" fill="none" stroke="#1e9e55" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <h2>Сообщение отправлено</h2>
+          <div class="sub">Мы ответим на указанную почту. Обычно в течение дня.</div>
+          <a class="btn btn-blue" href="index.html" style="margin-top:18px">На главную</a>
+        </div>
       </div>
 
     </section>
@@ -383,7 +476,7 @@
 <footer>
   <div class="wrap">
     <span>© 2026 kazxat.kz</span>
-    <span><a href="#">Помощь</a><a href="#">Соглашение</a><a href="#">Конфиденциальность</a></span>
+    <span><a href="#support">Помощь</a><a href="#">Соглашение</a><a href="#">Конфиденциальность</a></span>
   </div>
 </footer>
 
@@ -424,9 +517,11 @@
     let el=$("v-"+v) ? v : "login";
     if((el==="register2"||el==="register3") && !$("r-name").value.trim()) el="register";
     document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+el));
-    document.title = {register:"Регистрация",register2:"Регистрация",register3:"Регистрация",done:"Почта создана",restore:"Восстановление доступа",password:"Вход"}[el]
-      ? ({register:"Регистрация",register2:"Регистрация",register3:"Регистрация",done:"Почта создана",restore:"Восстановление доступа",password:"Вход"}[el]+" — Хат.Почта") : "Вход — Хат.Почта";
-    const f=document.querySelector(".view.on input:not([type=checkbox]):not([type=radio])"); if(f) setTimeout(()=>f.focus(),50);
+    const TITLES={register:"Регистрация",register2:"Регистрация",register3:"Регистрация",done:"Почта создана",restore:"Восстановление доступа",support:"Поддержка",password:"Вход"};
+    document.title = (TITLES[el]||"Вход")+" — Хат.Почта";
+    const f=document.querySelector(".view.on .sub-step.on input:not([type=checkbox]):not([type=radio]), .view.on > form input:not([type=checkbox]):not([type=radio])"); if(f) setTimeout(()=>f.focus(),50);
+    // картинка «я не робот» для восстановления и поддержки
+    setTimeout(()=>{ if(window.onViewShown) window.onViewShown(el); },0);
   }
   window.addEventListener("hashchange",()=>show()); show();
 
@@ -579,22 +674,6 @@
   const T = s => (window.HAT_T ? window.HAT_T(s) : s);
 
   /* ===== РЕГИСТРАЦИЯ: шаг 3 — подтверждение ===== */
-  // В поле восстановления вводятся 10 цифр после +7, например 707 123 45 67
-  function phoneMask(inp){
-    let d=inp.value.replace(/\D/g,"");
-    if(d.length===11 && (d[0]==="7"||d[0]==="8")) d=d.slice(1);
-    d=d.slice(0,10);
-    let f="";
-    if(d.length) f="("+d.slice(0,3);
-    if(d.length>=3) f+=")";
-    if(d.length>3) f+=" "+d.slice(3,6);
-    if(d.length>6) f+="-"+d.slice(6,8);
-    if(d.length>8) f+="-"+d.slice(8,10);
-    inp.value=f;
-    return d.length===10;
-  }
-  $("rs-phone").addEventListener("input",e=>phoneMask(e.target));
-
   let SID=null, capId=null, pollTimer=null, resendTimer=null;
   const login = ()=>$("r-user").value.trim().toLowerCase();
 
@@ -714,12 +793,95 @@
     go("done");
   }
 
-  /* ===== ВОССТАНОВЛЕНИЕ ===== */
-  $("f-restore").onsubmit=e=>{
+  /* ===== КАРТИНКА «Я НЕ РОБОТ» для восстановления и поддержки ===== */
+  var CAPS={rs:null, sp:null};   // id картинки для каждой формы
+  async function loadCap(p, noticeId){
+    $(p+"-cap").value=""; CAPS[p]=null;
+    try{ const c=await api("captcha"); CAPS[p]=c.id; $(p+"-cap-img").src=c.img; }
+    catch(e){ note(noticeId, e.message); }
+  }
+  $("rs-cap-new").onclick=()=>loadCap("rs","rs-notice");
+  $("sp-cap-new").onclick=()=>loadCap("sp","sp-notice");
+  ["rs-cap","sp-cap"].forEach(id=>$(id).addEventListener("input",e=>{ e.target.value=e.target.value.replace(/\D/g,"").slice(0,5); }));
+  window.onViewShown=v=>{
+    if(v==="restore" && $("rs-ask").classList.contains("on") && !CAPS.rs) loadCap("rs","rs-notice");
+    if(v==="support" && $("sp-form").classList.contains("on") && !CAPS.sp) loadCap("sp","sp-notice");
+  };
+
+  /* ===== ВОССТАНОВЛЕНИЕ ПАРОЛЯ ===== */
+  var RID=null;
+  function rsStep(n){ document.querySelectorAll("#v-restore .sub-step").forEach(x=>x.classList.toggle("on",x.id==="rs-"+n)); }
+  function restoreAgain(){ RID=null; note("rs-notice",""); rsStep("ask"); loadCap("rs","rs-notice"); }
+  window.restoreAgain=restoreAgain;
+  $("rs-codein").addEventListener("input",e=>{ e.target.value=e.target.value.replace(/\D/g,"").slice(0,6); });
+
+  $("f-restore").onsubmit=async e=>{
     e.preventDefault();
-    const n=$("rs-notice");
-    if(checkUser($("rs-user").value)||!phoneMask($("rs-phone"))){ n.textContent="Укажите адрес почты и номер телефона полностью"; n.className="notice err on"; return; }
-    n.textContent="Восстановление скоро заработает. Пока напишите администратору: support@kazxat.kz"; n.className="notice info on";
+    note("rs-notice","");
+    const u=$("rs-user").value.trim().toLowerCase().replace("@"+DOMAIN,"");
+    const err=checkUser(u);
+    $("rs-user-box").classList.toggle("err",!!err);
+    if(err){ note("rs-notice",err); return; }
+    if($("rs-cap").value.length!==5){ $("rs-cap-box").classList.add("err"); note("rs-notice","Введите 5 цифр с картинки"); return; }
+    $("rs-cap-box").classList.remove("err");
+    const btn=$("rs-submit"); btn.disabled=true;
+    try{
+      const r=await api("forgot",{login:u,captcha_id:CAPS.rs,captcha:$("rs-cap").value});
+      RID=r.rid;
+      $("rs-sent").textContent = r.method==="tg" ? T("Мы отправили код в Telegram, в чат с ботом") : T("Мы отправили код на резервную почту. Если письма нет, проверьте «Спам».");
+      $("rs-to").textContent=r.to;
+      $("rs-addr").textContent=r.address;
+      ["rs-codein","rs-pass","rs-pass2"].forEach(id=>$(id).value="");
+      note("rs-code-notice","");
+      rsStep("code");
+      setTimeout(()=>$("rs-codein").focus(),50);
+    }catch(err){
+      note("rs-notice",err.message);
+      if(err.data && err.data.support){
+        const n=$("rs-notice"); const a=document.createElement("a"); a.href="#support"; a.textContent=" "+T("Написать в поддержку →"); n.appendChild(a);
+      }
+      loadCap("rs","rs-notice");
+    }finally{ btn.disabled=false; }
+  };
+
+  $("f-reset").onsubmit=async e=>{
+    e.preventDefault();
+    note("rs-code-notice","");
+    const c=$("rs-codein").value, p=$("rs-pass").value;
+    if(c.length!==6){ note("rs-code-notice","Введите 6 цифр из сообщения"); return; }
+    if(p.length<8||!/\d/.test(p)||!/[A-Za-z]/.test(p)){ note("rs-code-notice","Пароль: минимум 8 символов, латинские буквы и цифры"); return; }
+    if(p!==$("rs-pass2").value){ $("rs-pass2-box").classList.add("err"); note("rs-code-notice","Пароли не совпадают"); return; }
+    $("rs-pass2-box").classList.remove("err");
+    const btn=$("rs-save"); btn.disabled=true;
+    try{
+      const r=await api("reset",{rid:RID,code:c,password:p});
+      $("rs-addr").textContent=r.address;
+      ["rs-pass","rs-pass2","rs-codein"].forEach(id=>$(id).value="");
+      RID=null; rsStep("done");
+    }catch(err){
+      note("rs-code-notice",err.message);
+      if(err.status===410) setTimeout(restoreAgain,1800);
+    }finally{ btn.disabled=false; }
+  };
+
+  /* ===== ПОДДЕРЖКА ===== */
+  $("f-support").onsubmit=async e=>{
+    e.preventDefault();
+    note("sp-notice","");
+    const name=$("sp-name").value.trim(), email=$("sp-email").value.trim(), text=$("sp-text").value.trim();
+    if(!name){ note("sp-notice","Укажите, как к вам обращаться"); return; }
+    if(!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)){ note("sp-notice","Укажите почту, на которую вам ответить"); return; }
+    if(text.length<10){ note("sp-notice","Опишите вопрос подробнее (хотя бы пару слов)"); return; }
+    if($("sp-cap").value.length!==5){ $("sp-cap-box").classList.add("err"); note("sp-notice","Введите 5 цифр с картинки"); return; }
+    $("sp-cap-box").classList.remove("err");
+    const btn=$("sp-submit"); btn.disabled=true;
+    try{
+      await api("support",{name,email,box:$("sp-box").value.trim().toLowerCase(),topic:$("sp-topic").value,text,captcha_id:CAPS.sp,captcha:$("sp-cap").value});
+      document.querySelectorAll("#v-support .sub-step").forEach(x=>x.classList.toggle("on",x.id==="sp-done"));
+    }catch(err){
+      note("sp-notice",err.message);
+      loadCap("sp","sp-notice");
+    }finally{ btn.disabled=false; }
   };
 </script>
 </body>
