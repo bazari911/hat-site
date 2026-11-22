@@ -205,7 +205,7 @@ body.task-login #login-footer a { color: #FEC50C !important; }
 html body .hat-acc-mini { flex: none !important; width: 30px !important; height: 30px !important; min-height: 30px; }
 
 /* Elastic hides '#layout-menu .popover-header a' from 481px; keep our logo visible in the left strip */
-#layout-menu .popover-header .hat-logo-link { display: inline-block; }
+#layout-menu .popover-header .hat-logo-link { display: inline-block !important; }
 
 /* ===== Голубой фон на всю почту, папки и письма — белыми карточками (как на kazxat.kz) ===== */
 @media (min-width: 769px) {
