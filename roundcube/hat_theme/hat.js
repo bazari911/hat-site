@@ -212,10 +212,206 @@
     row.parentNode.insertBefore(reg, row.nextSibling);
   }
 
+  /* ===== Хат Диск: большие файлы уходят ссылкой (до 2 ГБ, хранятся 30 дней) ===== */
+  var MB = 1048576, GB = 1073741824;
+  var disk = { on: false, tok: null, tokAt: 0, busy: 0, info: null, box: null, list: null };
+
+  function diskSize(n) {
+    if (!n || n <= 0) return '0 МБ';
+    if (n >= GB) return (Math.round(n / GB * 10) / 10).toString().replace('.', ',') + ' ГБ';
+    if (n >= MB) return Math.max(1, Math.round(n / MB)) + ' МБ';
+    return Math.max(1, Math.round(n / 1024)) + ' КБ';
+  }
+  function diskDate(ts) {
+    var d = new Date(ts * 1000);
+    return ('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + d.getFullYear();
+  }
+  function diskLimit() { return (window.rcmail && rcmail.env.max_filesize) || 25 * MB; }
+  function diskDays() { return (disk.info && disk.info.days) || 30; }
+
+  function diskToken(fresh) {
+    if (!fresh && disk.tok && Date.now() - disk.tokAt < 3 * 3600 * 1000) return Promise.resolve(disk.tok);
+    return fetch('./?_task=mail&_action=plugin.hat_disk_token', { credentials: 'same-origin', cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.token) throw new Error('Хат Диск пока не включён');
+        disk.tok = d.token; disk.tokAt = Date.now();
+        return d.token;
+      });
+  }
+  function diskInfo() {
+    return diskToken().then(function (t) {
+      return fetch('/disk/api/info', { headers: { 'X-Hat-Token': t }, cache: 'no-store' });
+    }).then(function (r) { if (!r.ok) throw new Error('info ' + r.status); return r.json(); })
+      .then(function (d) { disk.info = d; diskUsage(); return d; });
+  }
+  function diskUsage() {
+    var u = disk.box && disk.box.querySelector('.hat-disk-usage');
+    if (u && disk.info) u.textContent = 'Занято на Хат Диске: ' + diskSize(disk.info.used) + ' из ' + diskSize(disk.info.quota);
+  }
+
+  // вставить в письмо карточку со ссылкой
+  function diskInsert(f) {
+    var until = diskDate(f.expires), size = diskSize(f.size);
+    var text = '\n📎 ' + f.name + ' (' + size + ') — Хат Диск\nСкачать: ' + f.url +
+               '\nФайл хранится до ' + until + ', потом удалится автоматически.\n';
+    var h = '<table cellpadding="0" cellspacing="0" style="border:1px solid #cdeaf1;border-radius:10px;background:#f1f9fb;margin:8px 0;font-family:Arial,sans-serif">' +
+      '<tr><td style="padding:10px 12px;font-size:22px;vertical-align:middle">📎</td>' +
+      '<td style="padding:10px 14px 10px 0;font-size:14px;color:#1d2a30;vertical-align:middle">' +
+      '<a href="' + esc(f.url) + '" style="color:#0089a0;font-weight:bold;text-decoration:none">' + esc(f.name) + '</a> ' +
+      '<span style="color:#6b7c85">(' + esc(size) + ')</span><br>' +
+      '<span style="font-size:12px;color:#6b7c85">Хат Диск · файл хранится до ' + until + ', потом удалится автоматически</span>' +
+      '</td></tr></table><p>&nbsp;</p>';
+    try { rcmail.editor.replace({ text: text, html: h }); }
+    catch (e) { try { rcmail.editor.replace(text); } catch (e2) {} }
+  }
+
+  function diskItem(file) {
+    var li = document.createElement('li');
+    li.className = 'hat-disk-item';
+    li.innerHTML = '<div class="hd-top"><span class="hd-name"></span><span class="hd-size"></span>' +
+      '<button type="button" class="hd-x" title="Отменить">✕</button></div>' +
+      '<div class="hd-bar"><i></i></div><div class="hd-note"></div>';
+    li.querySelector('.hd-name').textContent = file.name;
+    li.querySelector('.hd-size').textContent = diskSize(file.size);
+    disk.list.appendChild(li);
+    return li;
+  }
+
+  function diskStart(file) {
+    var li = diskItem(file), note = li.querySelector('.hd-note'), bar = li.querySelector('.hd-bar i');
+    var maxf = (disk.info && disk.info.max_file) || 2 * GB;
+    var x = li.querySelector('.hd-x');
+    function fail(msg) {
+      li.classList.add('hd-err'); note.textContent = msg; x.title = 'Убрать';
+      x.onclick = function () { li.remove(); };
+    }
+    if (file.size > maxf) return fail('Файл больше ' + diskSize(maxf) + ' — такой не отправить даже через Хат Диск');
+    if (disk.info && disk.info.used + file.size > disk.info.quota)
+      return fail('На вашем Хат Диске занято ' + diskSize(disk.info.used) + ' из ' + diskSize(disk.info.quota) +
+                  '. Файлы освобождают место через ' + diskDays() + ' дней после загрузки.');
+    var until = diskDate(Date.now() / 1000 + diskDays() * 86400);
+    note.textContent = (file.size > diskLimit() ? 'Файл больше ' + diskSize(diskLimit()) + ', поэтому отправим его ссылкой через Хат Диск. ' : '') +
+      'Хранится ' + diskDays() + ' дней — до ' + until + ', потом удалится автоматически.';
+    if (file.size > diskLimit() && rcmail.display_message)
+      rcmail.display_message('«' + file.name + '» больше ' + diskSize(diskLimit()) + ' — отправим ссылкой через Хат Диск (хранится ' + diskDays() + ' дней)', 'notice', 8000);
+
+    disk.busy++;
+    var xhr, finished = false;
+    function end() { if (!finished) { finished = true; disk.busy--; } }
+    x.onclick = function () { if (xhr) xhr.abort(); end(); li.remove(); };
+
+    // шаг 1: проверка лимитов и бронь места (отказ приходит сразу, до отправки файла)
+    function reserve(t) {
+      return fetch('/disk/api/start', {
+        method: 'POST', cache: 'no-store',
+        headers: { 'X-Hat-Token': t, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: file.name, size: file.size })
+      }).then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (d) {
+          if (r.status === 401) { var e = new Error('auth'); e.auth = true; throw e; }
+          if (!r.ok || !d.uid) throw new Error(d.error || 'Хат Диск недоступен (ошибка ' + r.status + ')');
+          return { t: t, uid: d.uid };
+        });
+      });
+    }
+
+    function send(retry) {
+      diskToken(retry).then(reserve).then(function (res) {
+        if (finished) return;
+        var t = res.t;
+        xhr = new XMLHttpRequest();
+        xhr.open('POST', '/disk/api/upload');
+        xhr.setRequestHeader('X-Hat-Token', t);
+        xhr.setRequestHeader('X-Upload-Id', res.uid);
+        xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+        xhr.upload.onprogress = function (e) {
+          if (!e.lengthComputable) return;
+          var p = Math.floor(e.loaded * 100 / e.total);
+          bar.style.width = p + '%';
+          li.querySelector('.hd-size').textContent = diskSize(e.loaded) + ' из ' + diskSize(file.size) + ' · ' + p + '%';
+        };
+        xhr.onload = function () {
+          var d = {};
+          try { d = JSON.parse(xhr.responseText); } catch (e) {}
+          if (xhr.status === 401 && !retry) return send(true);
+          end();
+          if (xhr.status !== 200 || !d.url) return fail(d.error || 'Не удалось загрузить файл (ошибка ' + xhr.status + ')');
+          bar.style.width = '100%';
+          li.classList.add('hd-ok');
+          li.querySelector('.hd-size').textContent = diskSize(d.size);
+          note.innerHTML = '✓ Ссылка вставлена в письмо · хранится до <b>' + diskDate(d.expires) + '</b> · ';
+          var a = document.createElement('a'); a.href = d.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'открыть';
+          note.appendChild(a);
+          x.title = 'Убрать из списка (файл останется по ссылке)';
+          x.onclick = function () { li.remove(); };
+          if (disk.info) { disk.info.used = d.used; diskUsage(); }
+          diskInsert(d);
+        };
+        xhr.onerror = function () { end(); fail('Связь прервалась. Проверьте интернет и попробуйте ещё раз.'); };
+        xhr.send(file);
+      }).catch(function (e) {
+        if (e && e.auth && !retry) return send(true);
+        end(); fail((e && e.auth ? 'Войдите в почту заново' : e && e.message) || 'Хат Диск недоступен');
+      });
+    }
+    send(false);
+  }
+
+  function addDisk() {
+    if (!window.rcmail || rcmail.env.task !== 'mail' || rcmail.env.action !== 'compose') return;
+    var area = document.getElementById('compose-attachments');
+    if (!area || area.querySelector('.hat-disk')) return;
+    diskToken().then(function () {
+      disk.on = true;
+      var box = document.createElement('div');
+      box.className = 'hat-disk';
+      box.innerHTML = '<button type="button" class="btn btn-secondary hat-disk-btn">☁️ Большой файл — Хат Диск</button>' +
+        '<input type="file" multiple hidden>' +
+        '<div class="hat-disk-hint">Файлы больше ' + diskSize(diskLimit()) + ' уходят ссылкой: до 2 ГБ, хранятся 30 дней.</div>' +
+        '<div class="hat-disk-usage"></div><ul class="hat-disk-list"></ul>';
+      var btnRow = area.querySelector('.btn.attach');
+      if (btnRow && btnRow.parentNode) btnRow.parentNode.insertBefore(box, btnRow.nextSibling);
+      else area.insertBefore(box, area.firstChild);
+      disk.box = box; disk.list = box.querySelector('.hat-disk-list');
+      var inp = box.querySelector('input[type=file]');
+      box.querySelector('.hat-disk-btn').onclick = function () { inp.value = ''; inp.click(); };
+      inp.onchange = function () { for (var i = 0; i < inp.files.length; i++) diskStart(inp.files[i]); inp.value = ''; };
+      diskInfo().then(function (d) {
+        box.querySelector('.hat-disk-hint').textContent = 'Файлы больше ' + diskSize(diskLimit()) + ' уходят ссылкой: до ' +
+          diskSize(d.max_file) + ', хранятся ' + d.days + ' дней.';
+      }).catch(function () {});
+    }).catch(function () { /* диск не включён — почта работает как раньше */ });
+
+    // большие файлы из «Прикрепить файл» и перетаскивания — на Хат Диск, маленькие — как обычно
+    var orig = rcmail.file_upload;
+    rcmail.file_upload = function (files, post_args, props) {
+      var action = props && props.action;
+      if (disk.on && files && files.length && (!action || action === 'upload')) {
+        var big = [], small = [], lim = diskLimit();
+        for (var i = 0; i < files.length; i++) (files[i].size > lim ? big : small).push(files[i]);
+        if (big.length) {
+          big.forEach(diskStart);
+          if (!small.length) return false;
+          files = small;
+        }
+      }
+      return orig.call(this, files, post_args, props);
+    };
+    rcmail.addEventListener('beforesend', function () {
+      if (disk.busy > 0) {
+        rcmail.alert_dialog('Подождите: большой файл ещё загружается на Хат Диск. Отправить письмо можно, когда загрузка закончится.');
+        return false;
+      }
+    });
+    window.addEventListener('beforeunload', function (e) { if (disk.busy > 0) { e.preventDefault(); e.returnValue = ''; } });
+  }
+
   var done = false;
   function init() {
     if (done) return; done = true;
     addLoginLinks();
+    addDisk();
     if (document.getElementById('layout-sidebar')) document.body.classList.add('hat-has-sidebar');
     addHomeLinks();
     addCompose();

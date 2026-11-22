@@ -26,6 +26,10 @@ class hat_theme extends rcube_plugin
         // https://mail.kazxat.kz/rc/?_task=mail&_action=plugin.hat_status
         $this->register_action('plugin.hat_status', [$this, 'hat_status']);
 
+        // Хат Диск: пропуск для загрузки больших файлов (секрет — в config.inc.php плагина, не в git)
+        $this->load_config();
+        $this->register_action('plugin.hat_disk_token', [$this, 'hat_disk_token']);
+
         // Аватарки
         $this->add_hook('contact_photo', [$this, 'contact_photo']);
         $this->add_hook('preferences_sections_list', [$this, 'prefs_sections']);
@@ -87,6 +91,28 @@ class hat_theme extends rcube_plugin
             // ссылка «Выйти» (с защитным ключом сессии)
             'logout'      => $rc->url(['_task' => 'logout', '_token' => $rc->get_request_token()], false, true),
         ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    /* ---------------- Хат Диск: пропуск на 6 часов ---------------- */
+
+    public function hat_disk_token()
+    {
+        $rc = rcmail::get_instance();
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store, private');
+        header('X-Content-Type-Options: nosniff');
+
+        $secret = (string) $rc->config->get('hat_disk_secret', '');
+        $user   = strtolower((string) $rc->get_user_name());
+        if ($secret === '' || !$rc->user || !$this->is_ours($user)) {
+            echo json_encode(['error' => 'disk_off']);
+            exit;
+        }
+        $payload = $user . '|' . (time() + 6 * 3600);
+        $p64 = rtrim(strtr(base64_encode($payload), '+/', '-_'), '=');
+        $sig = hash_hmac('sha256', 'disk|' . $payload, $secret);
+        echo json_encode(['token' => $p64 . '.' . $sig, 'user' => $user]);
         exit;
     }
 

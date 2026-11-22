@@ -1,0 +1,29 @@
+[Unit]
+Description=Hat (kazxat.kz) - Hat Disk: large files in letters as links
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/hat-site/tools/hat_disk.py serve
+# Секреты: тот же файл, что у регистрации; systemd отдаёт сервису копию только для чтения
+LoadCredential=config:/etc/hat-reg/config.json
+# Временный пользователь без прав; файлы и база — в /var/lib/hat-disk
+DynamicUser=yes
+StateDirectory=hat-disk
+StateDirectoryMode=0700
+Environment=PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
+Restart=always
+RestartSec=10
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target
