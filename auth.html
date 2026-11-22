@@ -113,6 +113,31 @@
   .steps i{flex:1;height:4px;border-radius:2px;background:var(--line)}
   .steps i.on{background:var(--blue)}
 
+  /* шаг 3: способ подтверждения */
+  .ways{display:grid;gap:8px}
+  .field .way{display:flex;gap:12px;align-items:flex-start;border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;cursor:pointer;margin:0!important;font-weight:400!important}
+  .way:has(input:checked){border-color:var(--blue);background:#f1fbfd}
+  .way input{margin-top:3px;accent-color:var(--blue);flex:none}
+  .way b{display:block;font-size:14px}
+  .way small{display:block;color:var(--muted);font-size:12.5px;font-weight:400}
+  .badge{background:var(--gold);color:var(--blue-deep);font-size:11px;border-radius:8px;padding:1px 7px;margin-left:6px;font-weight:700;vertical-align:1px}
+  .cap{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+  .cap img{height:64px;width:210px;max-width:65%;border-radius:10px;border:1.5px solid var(--line);background:#f1f9fb;flex:none}
+  .linkbtn{border:none;background:none;color:var(--blue-dark);cursor:pointer;font-size:13px;padding:0;text-align:left}
+  .linkbtn:hover{text-decoration:underline}
+  .linkbtn:disabled{color:var(--muted);cursor:default;text-decoration:none}
+  .sub-step{display:none}
+  .sub-step.on{display:block}
+  .wait{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px;margin:16px 0}
+  .spin{width:18px;height:18px;border:2.5px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:rot .9s linear infinite;flex:none}
+  @keyframes rot{to{transform:rotate(360deg)}}
+  .btn-tg{background:#2aabee;color:#fff}
+  .btn-tg:hover{background:#1e96d1}
+  .tg-steps{margin:4px 0 6px 18px;font-size:14px;color:var(--text)}
+  .tg-steps li{margin:4px 0}
+  .small{font-size:12.5px;color:var(--muted);margin-top:10px;word-break:break-all}
+  .done-ico{width:64px;height:64px;margin:0 auto 10px;display:block}
+
   .done{text-align:center}
   .done .big{font-size:56px;margin-bottom:10px}
   .done .addr{display:inline-block;font-size:20px;font-weight:800;color:var(--blue-deep);background:#f1f9fb;border-radius:10px;padding:10px 18px;margin:12px 0 20px}
@@ -250,27 +275,81 @@
         </form>
       </div>
 
-      <!-- ВИД 5: РЕГИСТРАЦИЯ, шаг 3 — телефон для восстановления -->
+      <!-- ВИД 5: РЕГИСТРАЦИЯ, шаг 3 — подтверждение -->
       <div class="view" id="v-register3">
         <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i></div>
-        <button class="back" onclick="go('register2')">← Назад</button>
-        <h2>Защитите ящик</h2>
-        <div class="sub">Шаг 3 из 3 · Телефон поможет восстановить доступ, если забудете пароль</div>
-        <form id="f-reg3" novalidate>
-          <div class="field">
-            <label for="r-phone">Номер телефона</label>
-            <div class="input" id="r-phone-box"><span class="prefix">+7</span><input id="r-phone" type="tel" autocomplete="tel-national" placeholder="(___) ___-__-__"></div>
-            <div class="hint" id="r-phone-hint">На этот номер придёт код подтверждения</div>
-          </div>
-          <label class="check"><input type="checkbox" id="r-terms"> <span>Я принимаю <a href="#">Пользовательское соглашение</a> и <a href="#">Политику конфиденциальности</a></span></label>
-          <div class="notice info" id="r3-notice"></div>
-          <button class="btn btn-blue" id="r-submit" disabled>Создать почту</button>
-        </form>
+
+        <!-- 3а: выбор способа -->
+        <div class="sub-step on" id="s3-choose">
+          <button class="back" onclick="go('register2')">← Назад</button>
+          <h2>Подтвердите регистрацию</h2>
+          <div class="sub">Шаг 3 из 3 · Так мы защищаем почту от спам-роботов</div>
+          <form id="f-reg3" novalidate>
+            <div class="field">
+              <label>Способ подтверждения</label>
+              <div class="ways">
+                <label class="way"><input type="radio" name="way" value="tg" checked><div><b>Через Telegram<span class="badge">лучше всего</span></b><small>Бот попросит поделиться номером. Через него можно будет восстановить пароль</small></div></label>
+                <label class="way"><input type="radio" name="way" value="email"><div><b>Через другую почту</b><small>Пришлём код на Gmail, Mail.ru или другой ящик</small></div></label>
+                <label class="way"><input type="radio" name="way" value="none"><div><b>Без подтверждения</b><small>Не больше 1 ящика в сутки. Восстановить забытый пароль будет нельзя</small></div></label>
+              </div>
+            </div>
+            <div class="field" id="r-email-field" hidden>
+              <label for="r-email">Ваша другая почта</label>
+              <div class="input" id="r-email-box"><input id="r-email" type="email" autocomplete="email" placeholder="name@gmail.com"></div>
+              <div class="hint" id="r-email-hint">На неё придёт код из 6 цифр</div>
+            </div>
+            <div class="field">
+              <label for="r-cap">Я не робот: введите цифры с картинки</label>
+              <div class="cap"><img id="r-cap-img" alt="Цифры для проверки"><button type="button" class="linkbtn" id="r-cap-new">Другая картинка</button></div>
+              <div class="input" id="r-cap-box"><input id="r-cap" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="5 цифр"></div>
+            </div>
+            <label class="check"><input type="checkbox" id="r-terms"> <span>Я принимаю <a href="#">Пользовательское соглашение</a> и <a href="#">Политику конфиденциальности</a></span></label>
+            <div class="notice err" id="r3-notice"></div>
+            <button class="btn btn-blue" id="r-submit" disabled>Продолжить</button>
+          </form>
+        </div>
+
+        <!-- 3б: Telegram -->
+        <div class="sub-step" id="s3-tg">
+          <h2>Подтвердите в Telegram</h2>
+          <div class="sub">Регистрация ящика</div><div class="chip"><span class="s3-addr" data-noi18n></span></div>
+          <ol class="tg-steps">
+            <li>Нажмите кнопку ниже — откроется бот @kazxat_kz_bot</li>
+            <li>В боте нажмите «Запустить», затем «Поделиться номером»</li>
+            <li>Вернитесь сюда — ящик создастся сам</li>
+          </ol>
+          <a class="btn btn-tg" id="tg-open" target="_blank" rel="noopener" style="margin-top:14px">Открыть Telegram</a>
+          <div class="wait"><span class="spin"></span><span id="tg-wait">Ждём подтверждения…</span></div>
+          <div class="small">Telegram на другом устройстве? Откройте там эту ссылку: <span id="tg-link" data-noi18n></span></div>
+          <button class="btn btn-ghost" type="button" onclick="backToChoose()">Выбрать другой способ</button>
+        </div>
+
+        <!-- 3в: код из письма -->
+        <div class="sub-step" id="s3-email">
+          <h2>Введите код из письма</h2>
+          <div class="sub">Мы отправили код на этот адрес. Если письма нет, проверьте папку «Спам».</div>
+          <div class="chip"><span id="s3-email-to" data-noi18n></span></div>
+          <form id="f-code" novalidate>
+            <div class="field">
+              <label for="r-code">Код из 6 цифр</label>
+              <div class="input" id="r-code-box"><input id="r-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></div>
+            </div>
+            <div class="notice err" id="code-notice"></div>
+            <button class="btn btn-blue">Подтвердить</button>
+          </form>
+          <div class="links"><button type="button" class="linkbtn" id="code-resend" disabled>Отправить ещё раз</button><button type="button" class="linkbtn" onclick="backToChoose()">Другой способ</button></div>
+        </div>
+
+        <!-- 3г: создаём ящик -->
+        <div class="sub-step" id="s3-making">
+          <h2>Создаём ящик…</h2>
+          <div class="wait"><span class="spin"></span><span>Это займёт несколько секунд</span></div>
+        </div>
       </div>
 
       <!-- ВИД 6: ГОТОВО -->
       <div class="view done" id="v-done">
-        <div class="big">🎉</div>
+        <svg class="done-ico" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#e3f6fa"/><path d="M19 33l9 9 17-19" fill="none" stroke="#1e9e55" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <h2>Почта создана!</h2>
         <div class="sub">Ваш новый адрес:</div>
         <div class="addr" id="d-addr"></div>
@@ -282,7 +361,7 @@
       <div class="view" id="v-restore">
         <a class="back" href="https://mail.kazxat.kz/rc/">← Ко входу</a>
         <h2>Восстановление доступа</h2>
-        <div class="sub">Укажите адрес почты и номер телефона, привязанный к ящику</div>
+        <div class="sub">Восстановление через Telegram и резервную почту скоро заработает</div>
         <div class="notice info" id="rs-notice"></div>
         <form id="f-restore" novalidate>
           <div class="field">
@@ -311,9 +390,10 @@
 <script>
   /* ===== НАСТРОЙКИ ===== */
   const DOMAIN = "kazxat.kz";
-  // Пока сервер не подключён, формы работают в демо-режиме (ничего никуда не отправляют)
-  const DEMO = true;
-  // Занятые и служебные адреса (на сервере проверка будет через API mailcow)
+  // Регистрация идёт через службу на сервере (/api/reg/). DEMO=true — только для показа без сервера
+  const DEMO = false;
+  const API = "/api/reg/";
+  // Служебные адреса (окончательная проверка — на сервере)
   const TAKEN = ["admin","info","support","postmaster","abuse","root","mail","noreply","webmaster","hat","kazxat","test"];
 
   /* ===== ЛОГОТИП ===== */
@@ -341,7 +421,8 @@
   function show(v){
     v = v || (location.hash||"#register").slice(1);
     if(v==="login" || v==="password"){ location.replace(MAIL_URL); return; }
-    const el=$("v-"+v) ? v : "login";
+    let el=$("v-"+v) ? v : "login";
+    if((el==="register2"||el==="register3") && !$("r-name").value.trim()) el="register";
     document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+el));
     document.title = {register:"Регистрация",register2:"Регистрация",register3:"Регистрация",done:"Почта создана",restore:"Восстановление доступа",password:"Вход"}[el]
       ? ({register:"Регистрация",register2:"Регистрация",register3:"Регистрация",done:"Почта создана",restore:"Восстановление доступа",password:"Вход"}[el]+" — Хат.Почта") : "Вход — Хат.Почта";
@@ -437,7 +518,19 @@
     if(!v) $("r-user-hint").textContent="Латинские буквы, цифры, точка, дефис и подчёркивание";
     return !err;
   }
-  $("r-user").addEventListener("input",checkReg);
+  let chkTimer=null, chkSeq=0;
+  $("r-user").addEventListener("input",()=>{
+    clearTimeout(chkTimer);
+    if(!checkReg()||DEMO) return;
+    const v=$("r-user").value.trim().toLowerCase(), my=++chkSeq;
+    chkTimer=setTimeout(async()=>{
+      try{
+        const r=await api("check?login="+encodeURIComponent(v));
+        if(my!==chkSeq) return;
+        if(!r.ok) setHint("r-user-box","r-user-hint",r.msg||"Этот адрес уже занят, попробуйте другой");
+      }catch(e){}
+    },450);
+  });
 
   function strength(p){
     let s=0;
@@ -468,14 +561,28 @@
     const p=$("r-pass").value;
     if(p.length<8||!/\d/.test(p)||!/[A-Za-zА-Яа-я]/.test(p)){ const h=$("r-pass-hint"); h.textContent="Пароль: минимум 8 символов, буквы и цифры"; h.style.color="var(--red)"; return; }
     if(!checkPass2()) return;
+    showSub("choose");
     go("register3");
+    loadCaptcha();
   };
 
-  /* ===== РЕГИСТРАЦИЯ: шаг 3 — телефон ===== */
-  // В поле вводятся 10 цифр после +7, например 707 123 45 67
+  /* ===== ЗАПРОСЫ К СЕРВЕРУ ===== */
+  async function api(path, body){
+    let r;
+    try{
+      r = await fetch(API+path, body ? {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)} : {cache:"no-store"});
+    }catch(e){ throw Object.assign(new Error("Нет связи с сервером. Проверьте интернет и попробуйте ещё раз."),{data:{}}); }
+    let j={}; try{ j=await r.json(); }catch(e){}
+    if(!r.ok) throw Object.assign(new Error(j.error||"Сервис регистрации временно недоступен. Попробуйте позже."),{data:j,status:r.status});
+    return j;
+  }
+  const T = s => (window.HAT_T ? window.HAT_T(s) : s);
+
+  /* ===== РЕГИСТРАЦИЯ: шаг 3 — подтверждение ===== */
+  // В поле восстановления вводятся 10 цифр после +7, например 707 123 45 67
   function phoneMask(inp){
     let d=inp.value.replace(/\D/g,"");
-    if(d.length===11 && (d[0]==="7"||d[0]==="8")) d=d.slice(1); // вставили номер целиком
+    if(d.length===11 && (d[0]==="7"||d[0]==="8")) d=d.slice(1);
     d=d.slice(0,10);
     let f="";
     if(d.length) f="("+d.slice(0,3);
@@ -486,30 +593,133 @@
     inp.value=f;
     return d.length===10;
   }
-  ["r-phone","rs-phone"].forEach(id=>$(id).addEventListener("input",e=>phoneMask(e.target)));
+  $("rs-phone").addEventListener("input",e=>phoneMask(e.target));
+
+  let SID=null, capId=null, pollTimer=null, resendTimer=null;
+  const login = ()=>$("r-user").value.trim().toLowerCase();
+
+  function showSub(n){
+    document.querySelectorAll("#v-register3 .sub-step").forEach(x=>x.classList.toggle("on",x.id==="s3-"+n));
+    if(n!=="tg") stopPoll();
+  }
+  function note(id,msg){ const n=$(id); n.textContent=msg||""; n.classList.toggle("on",!!msg); }
+  function backToChoose(){ SID=null; showSub("choose"); loadCaptcha(); }
+  window.backToChoose=backToChoose;
+
+  async function loadCaptcha(){
+    $("r-cap").value=""; capId=null;
+    if(DEMO) return;
+    try{ const c=await api("captcha"); capId=c.id; $("r-cap-img").src=c.img; }
+    catch(e){ note("r3-notice", e.message); }
+  }
+  $("r-cap-new").onclick=loadCaptcha;
+  $("r-cap").addEventListener("input",e=>{ e.target.value=e.target.value.replace(/\D/g,"").slice(0,5); });
+  $("r-code").addEventListener("input",e=>{ e.target.value=e.target.value.replace(/\D/g,"").slice(0,6); });
+
+  document.querySelectorAll("input[name=way]").forEach(r=>r.addEventListener("change",()=>{
+    $("r-email-field").hidden = way()!=="email";
+    note("r3-notice","");
+  }));
+  const way = ()=>(document.querySelector("input[name=way]:checked")||{}).value;
   function canSubmit(){ $("r-submit").disabled=!$("r-terms").checked; }
   $("r-terms").addEventListener("change",canSubmit);
 
-  $("f-reg3").onsubmit=e=>{
+  $("f-reg3").onsubmit=async e=>{
     e.preventDefault();
-    if(!phoneMask($("r-phone"))){ setHint("r-phone-box","r-phone-hint","Введите номер полностью: 10 цифр после +7"); return; }
-    setHint("r-phone-box","r-phone-hint","");
-    const addr=$("r-user").value.trim().toLowerCase()+"@"+DOMAIN;
-    if(DEMO){
-      $("d-addr").textContent=addr;
-      try{ sessionStorage.setItem("hatUser",addr); }catch(e){}
-      go("done");
-      return;
-    }
-    // TODO: SMS-код и создание ящика через API mailcow на сервере
+    note("r3-notice","");
+    const m=way(), email=$("r-email").value.trim();
+    if(m==="email" && !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)){ setHint("r-email-box","r-email-hint","Проверьте адрес почты"); return; }
+    if(m==="email" && email.toLowerCase().endsWith("@"+DOMAIN)){ setHint("r-email-box","r-email-hint","Укажите почту на другом сервисе, не @kazxat.kz"); return; }
+    setHint("r-email-box","r-email-hint","", m==="email"?"На неё придёт код из 6 цифр":"");
+    if($("r-cap").value.length!==5){ $("r-cap-box").classList.add("err"); note("r3-notice","Введите 5 цифр с картинки"); return; }
+    $("r-cap-box").classList.remove("err");
+    if(DEMO){ return finish(login()+"@"+DOMAIN); }
+    const btn=$("r-submit"); btn.disabled=true;
+    try{
+      const r=await api("start",{login:login(),method:m,email:m==="email"?email:"",captcha_id:capId,captcha:$("r-cap").value});
+      SID=r.sid;
+      document.querySelectorAll(".s3-addr").forEach(x=>x.textContent=login()+"@"+DOMAIN);
+      if(m==="none") return createBox();
+      if(m==="tg"){
+        $("tg-open").href=r.tg_link; $("tg-link").textContent=r.tg_link;
+        $("tg-wait").textContent=T("Ждём подтверждения…");
+        showSub("tg"); startPoll();
+      }else{
+        $("s3-email-to").textContent=r.email; $("r-code").value=""; note("code-notice","");
+        showSub("email"); resendCountdown(); setTimeout(()=>$("r-code").focus(),50);
+      }
+    }catch(err){
+      note("r3-notice", err.message);
+      if(err.data && err.data.taken){ go("register2"); setHint("r-user-box","r-user-hint",err.message); return; }
+      loadCaptcha();
+    }finally{ canSubmit(); }
   };
+
+  // Telegram: ждём, пока человек поделится номером в боте
+  function startPoll(delay){
+    stopPoll();
+    const tick=async()=>{
+      if(!SID) return;
+      try{
+        const st=await api("status?sid="+encodeURIComponent(SID));
+        if(st.verified){ stopPoll(); return createBox(); }
+        if(st.tg_opened) $("tg-wait").textContent=T("Бот открыт. Нажмите «Поделиться номером»…");
+      }catch(err){
+        if(err.status===410){ stopPoll(); backToChoose(); note("r3-notice",err.message); return; }
+      }
+      pollTimer=setTimeout(tick,2500);
+    };
+    pollTimer=setTimeout(tick,delay==null?2500:delay);
+  }
+  function stopPoll(){ clearTimeout(pollTimer); pollTimer=null; }
+  // вернулись из Telegram на телефоне — проверяем сразу
+  document.addEventListener("visibilitychange",()=>{ if(!document.hidden && pollTimer) startPoll(0); });
+
+  // Код из письма
+  function resendCountdown(){
+    const b=$("code-resend"); let t=60;
+    clearInterval(resendTimer); b.disabled=true;
+    b.textContent=T("Отправить ещё раз")+" ("+t+")";
+    resendTimer=setInterval(()=>{ t--; if(t<=0){ clearInterval(resendTimer); b.disabled=false; b.textContent=T("Отправить ещё раз"); } else b.textContent=T("Отправить ещё раз")+" ("+t+")"; },1000);
+  }
+  $("code-resend").onclick=async()=>{
+    note("code-notice","");
+    try{ await api("resend",{sid:SID}); resendCountdown(); }
+    catch(err){ note("code-notice",err.message); if(err.status===410) backToChoose(); }
+  };
+  $("f-code").onsubmit=async e=>{
+    e.preventDefault();
+    const c=$("r-code").value;
+    if(c.length!==6){ note("code-notice","Введите 6 цифр из письма"); return; }
+    try{ await api("code",{sid:SID,code:c}); createBox(); }
+    catch(err){ note("code-notice",err.message); if(err.status===410) backToChoose(); }
+  };
+
+  // Создание ящика
+  async function createBox(){
+    showSub("making");
+    try{
+      const r=await api("create",{sid:SID,password:$("r-pass").value,first:$("r-name").value.trim(),last:$("r-surname").value.trim()});
+      finish(r.address);
+    }catch(err){
+      SID=null; showSub("choose"); loadCaptcha();
+      note("r3-notice",err.message);
+      if(err.data && err.data.taken){ go("register2"); setHint("r-user-box","r-user-hint",err.message); }
+    }
+  }
+  function finish(addr){
+    $("d-addr").textContent=addr;
+    $("r-pass").value=""; $("r-pass2").value="";
+    try{ sessionStorage.setItem("hatUser",addr); }catch(e){}
+    go("done");
+  }
 
   /* ===== ВОССТАНОВЛЕНИЕ ===== */
   $("f-restore").onsubmit=e=>{
     e.preventDefault();
     const n=$("rs-notice");
     if(checkUser($("rs-user").value)||!phoneMask($("rs-phone"))){ n.textContent="Укажите адрес почты и номер телефона полностью"; n.className="notice err on"; return; }
-    n.textContent="Демо-режим: отправку SMS-кода подключим, когда сайт будет на сервере."; n.className="notice info on";
+    n.textContent="Восстановление скоро заработает. Пока напишите администратору: support@kazxat.kz"; n.className="notice info on";
   };
 </script>
 </body>

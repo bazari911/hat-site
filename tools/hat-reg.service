@@ -1,0 +1,29 @@
+[Unit]
+Description=Hat (kazxat.kz) - registration service and Telegram bot
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/hat-site/tools/hat_reg.py serve
+# Секреты: systemd читает файл сам (root) и отдаёт сервису копию только для чтения
+LoadCredential=config:/etc/hat-reg/config.json
+# Сервис работает от временного пользователя без прав, база — в /var/lib/hat-reg
+DynamicUser=yes
+StateDirectory=hat-reg
+StateDirectoryMode=0700
+Environment=PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
+Restart=always
+RestartSec=10
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target
