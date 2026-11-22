@@ -277,6 +277,22 @@ quotainfo)
   echo "-- roundcube max_message_size: $(grep -h max_message_size $C $RC/config/defaults.inc.php 2>/dev/null | head -2 | tr '\n' ' ')"
   ;;
 
+msgsize)
+  SIZE=${2:-36700160}; RCSIZE=${3:-35M}
+  echo "== msgsize: Postfix message_size_limit=$SIZE, Roundcube max_message_size=$RCSIZE"
+  X=data/conf/postfix/extra.cf
+  bak $X; touch $X
+  if grep -q '^message_size_limit' $X; then sed -i "s/^message_size_limit.*/message_size_limit = $SIZE/" $X; else echo "message_size_limit = $SIZE" >> $X; fi
+  echo "-- $X:"; cat $X
+  bak $C
+  if grep -qF "['max_message_size']" $C; then sed -i "/^.config\['max_message_size'\]/ s/=.*/= '$RCSIZE';/" $C; else echo "\$config['max_message_size'] = '$RCSIZE';" >> $C; fi
+  grep -n max_message_size $C
+  docker exec $PHP php -l /web/rc/config/config.inc.php
+  docker compose restart postfix-mailcow
+  sleep 5
+  echo "postfix message_size_limit now: $(docker exec $(docker ps -qf name=postfix-mailcow) postconf -h message_size_limit)"
+  ;;
+
 restart)
   echo "== restart mailcow (webmail down for 1-2 minutes)"
   docker compose down && docker compose up -d
@@ -287,5 +303,5 @@ mailboxes)
   sql mailcow -e "SELECT username, active FROM mailbox WHERE domain='kazxat.kz';"
   ;;
 
-*) echo "usage: $0 a|b|c|d|e|f|g|h|theme|pwinfo|password|apitest|netinfo|pinnginx|pincheck|quotainfo|restart|mailboxes" ;;
+*) echo "usage: $0 a|b|c|d|e|f|g|h|theme|pwinfo|password|apitest|netinfo|pinnginx|pincheck|quotainfo|msgsize|restart|mailboxes" ;;
 esac
