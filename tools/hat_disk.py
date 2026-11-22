@@ -342,7 +342,8 @@ footer a{{color:#0089a0}}
 
 
 def ru_date(ts):
-    return time.strftime("%d.%m.%Y", time.localtime(ts))
+    """Дата по времени Казахстана (UTC+5), а не по часам сервера (UTC) — как в письме."""
+    return time.strftime("%d.%m.%Y", time.gmtime(ts + int(CFG.get("disk_tz_hours", 5)) * 3600))
 
 
 def page(title, body):
