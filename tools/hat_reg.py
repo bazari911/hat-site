@@ -9,7 +9,8 @@
   * лимиты на IP, номер, почту;
   * создание ящика через API mailcow;
   * «Забыли пароль?»: код в Telegram (или на резервную почту), новый пароль через API mailcow;
-  * форма поддержки: письмо на support@kazxat.kz.
+  * форма поддержки: письмо на support@kazxat.kz;
+  * заявки на рекламу: письмо на reklama@kazxat.kz.
 
 Секреты лежат только в /etc/hat-reg/config.json (права 600). В журнал не пишутся.
 
@@ -19,6 +20,7 @@
   hat_reg.py create-noreply   — создать ящик noreply@kazxat.kz для писем с кодами
   hat_reg.py domain-limits N  — показать/поднять лимит ящиков домена до N
   hat_reg.py support-alias ЯЩИК — направить support@kazxat.kz на ЯЩИК (например zharkyn@kazxat.kz)
+  hat_reg.py ads-alias ЯЩИК     — направить reklama@kazxat.kz на ЯЩИК и разрешить ему отвечать от reklama@
 """
 
 import base64
@@ -54,6 +56,7 @@ admin administrator root postmaster hostmaster webmaster abuse security noreply 
 mailer-daemon daemon support help info contact mail email pochta post hat xat kazxat
 kazxat.kz test tester billing payment pay sales news robot bot system sysadmin staff
 moderator owner office press privacy legal ssl dns ftp www api null nobody
+reklama reclama reklam ads advert advertising marketing jarnama zharnama
 """.split())
 
 DEFAULT_LIMITS = {
@@ -72,7 +75,11 @@ DEFAULT_LIMITS = {
     "reset_per_ip_day": 10,       # запросов «Забыли пароль?» с одного IP в сутки
     "reset_per_addr_hour": 3,     # кодов восстановления на один ящик в час
     "support_per_ip_day": 5,      # сообщений в поддержку с одного IP в сутки
+    "ads_per_ip_day": 5,          # заявок на рекламу с одного IP в сутки
 }
+
+AD_PLACES = ("Верхний баннер 728×90 / 970×90", "Боковой баннер 300×400",
+             "Баннер в ленте новостей 728×120", "Другое / пока не знаю")
 
 SUPPORT_TOPICS = ("Не могу войти", "Восстановление пароля", "Регистрация", "Письма не приходят",
                   "Спам или мошенничество", "Предложение", "Другое")
@@ -104,6 +111,7 @@ def load_config():
     cfg.setdefault("quota_mb", 3072)
     cfg.setdefault("bot_name", "kazxat_kz_bot")
     cfg.setdefault("support_to", "support@" + DOMAIN)
+    cfg.setdefault("ads_to", "reklama@" + DOMAIN)
     cfg.setdefault("db", os.path.join(os.environ.get("STATE_DIRECTORY", "/var/lib/hat-reg"), "reg.db"))
     lim = dict(DEFAULT_LIMITS)
     lim.update(cfg.get("limits") or {})
@@ -843,6 +851,11 @@ def clean_text(s, n):
     return re.sub(r"\n{4,}", "\n\n\n", s).strip()[:n]
 
 
+def kz_now():
+    """Время Казахстана (UTC+5) для писем — часы сервера идут по UTC."""
+    return time.strftime("%Y-%m-%d %H:%M", time.gmtime(time.time() + 5 * 3600))
+
+
 def do_support(ip, b):
     lim = CFG["limits"]
     name = clean_name(b.get("name"))
@@ -867,7 +880,7 @@ def do_support(ip, b):
     body = (f"Сообщение с формы поддержки kazxat.kz\n\n"
             f"Тема: {topic}\nИмя: {name}\nОтветить на: {email}\n"
             f"Ящик @kazxat.kz: {box or '—'}\n"
-            f"Время: {time.strftime('%Y-%m-%d %H:%M')}\nIP: {ip}\n\n"
+            f"Время: {kz_now()}\nIP: {ip}\n\n"
             f"{text}\n\n— Чтобы ответить, нажмите «Ответить»: письмо уйдёт на {email}\n")
     try:
         send_mail(CFG["support_to"], f"[Поддержка] {topic} — {name}", body, reply_to=email)
@@ -876,6 +889,41 @@ def do_support(ip, b):
         raise Err("Не удалось отправить сообщение. Попробуйте позже.", 502)
     ev_add("sup_ip", ip)
     log("сообщение в поддержку, тема:", topic)
+    return {"ok": True}
+
+
+def do_ads(ip, b):
+    """Заявка на рекламу → reklama@kazxat.kz (ответ клиенту уходит от reklama@)."""
+    lim = CFG["limits"]
+    company = re.sub(r"[\x00-\x1f<>\"\\]", "", str(b.get("company") or "")).strip()[:100]
+    name = clean_name(b.get("name"))
+    email = str(b.get("email") or "").strip()
+    phone = re.sub(r"[^0-9+()\- ]", "", str(b.get("phone") or "")).strip()[:30]
+    place = b.get("place") if b.get("place") in AD_PLACES else AD_PLACES[-1]
+    text = clean_text(b.get("text"), 3000)
+    if not company:
+        raise Err("Укажите компанию или бренд")
+    if not name:
+        raise Err("Укажите, как к вам обращаться")
+    if not EMAIL_RE.match(email):
+        raise Err("Укажите почту, на которую вам ответить")
+    if len(text) < 10:
+        raise Err("Опишите, что хотите разместить (хотя бы пару слов)")
+    if ev_count("ads_ip", ip, 86400) >= lim["ads_per_ip_day"]:
+        raise Err("Вы уже отправили несколько заявок сегодня. Мы ответим на них — подождите, пожалуйста.", 429)
+    if not check_captcha(b.get("captcha_id"), b.get("captcha")):
+        raise Err("Неверные цифры с картинки, попробуйте ещё раз", 400, {"captcha": True})
+    body = (f"Заявка на рекламу с сайта kazxat.kz\n\n"
+            f"Компания: {company}\nКонтакт: {name}\nПочта: {email}\nТелефон: {phone or '—'}\n"
+            f"Место: {place}\nВремя: {kz_now()}\nIP: {ip}\n\n"
+            f"{text}\n\n— Чтобы ответить, нажмите «Ответить»: письмо уйдёт на {email} от reklama@kazxat.kz\n")
+    try:
+        send_mail(CFG["ads_to"], f"[Реклама] {company} — {name}", body, reply_to=email)
+    except Exception as e:
+        log("smtp error (ads):", type(e).__name__, str(e)[:200])
+        raise Err("Не удалось отправить заявку. Попробуйте позже.", 502)
+    ev_add("ads_ip", ip)
+    log("заявка на рекламу")
     return {"ok": True}
 
 
@@ -951,7 +999,7 @@ class Handler(BaseHTTPRequestHandler):
         r = self.route()
         fn = {"start": do_start, "code": do_code, "create": do_create,
               "resend": lambda ip, b: send_code(b.get("sid"), ip),
-              "forgot": do_forgot, "reset": do_reset, "support": do_support}.get(r)
+              "forgot": do_forgot, "reset": do_reset, "support": do_support, "ads": do_ads}.get(r)
         if not fn:
             return self.reply(404, {"error": "not found"})
         self.run(fn, b)
@@ -1032,6 +1080,32 @@ def cmd_support_alias(target=None):
     return 0 if ok else 1
 
 
+def cmd_ads_alias(target=None):
+    """reklama@kazxat.kz → ЯЩИК, и ЯЩИК может отправлять письма от имени reklama@."""
+    ads = CFG["ads_to"]
+    if not target or not EMAIL_RE.match(target) or not target.lower().endswith("@" + DOMAIN):
+        print("Укажите свой ящик @kazxat.kz, например: ads-alias zharkyn.shapau@kazxat.kz")
+        return 2
+    if not mailbox_exists(target):
+        print("Ящика %s нет" % target)
+        return 1
+    if mailbox_exists(ads):
+        print("%s — отдельный ящик. Ничего не меняю." % ads)
+        return 0
+    if alias_exists(ads):
+        print("Пересылка %s уже есть." % ads)
+    else:
+        ok, why = api_ok(api("POST", "add/alias", {"address": ads, "goto": target, "active": "1"}))
+        if not ok:
+            print("Ошибка пересылки: " + why)
+            return 1
+        print("Готово: письма на %s приходят в %s" % (ads, target))
+    # «default» = свой адрес и пересылки, которые ведут на этот ящик; плюс явно reklama@
+    ok, why = api_ok(api("POST", "edit/mailbox", {"items": [target], "attr": {"sender_acl": ["default", ads]}}))
+    print(("Готово: %s может отправлять письма от имени %s" % (target, ads)) if ok else ("Ошибка прав отправки: " + why))
+    return 0 if ok else 1
+
+
 def cmd_create_noreply():
     local, addr = "noreply", "noreply@" + DOMAIN
     if CFG.get("smtp_pass") and mailbox_exists(addr):
@@ -1086,6 +1160,8 @@ def main():
         return cmd_create_noreply()
     elif c == "domain-limits":
         return cmd_domain_limits(sys.argv[2] if len(sys.argv) > 2 else None)
+    elif c == "ads-alias":
+        return cmd_ads_alias(sys.argv[2] if len(sys.argv) > 2 else None)
     elif c == "support-alias":
         return cmd_support_alias(sys.argv[2] if len(sys.argv) > 2 else None)
     else:

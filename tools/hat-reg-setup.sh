@@ -9,6 +9,7 @@
 #   service   — установить и запустить службу hat-reg
 #   nginx     — добавить /api/reg/ в hat-site.conf (с копией и проверкой nginx -t)
 #   support ЯЩИК — письма на support@kazxat.kz пересылать в ЯЩИК (например zharkyn@kazxat.kz)
+#   ads ЯЩИК  — reklama@kazxat.kz пересылать в ЯЩИК и разрешить отвечать от reklama@
 #   restart   — перезапустить службу после обновления кода (git pull)
 #   test      — проверить всё целиком
 #   logs      — последние записи журнала службы
@@ -109,6 +110,9 @@ PYEOF
 support)
   $PY support-alias ${2:-}
   ;;
+ads)
+  $PY ads-alias ${2:-}
+  ;;
 restart)
   systemctl restart hat-reg
   sleep 3
@@ -128,6 +132,6 @@ logs)
   journalctl -u hat-reg --no-pager -n "${2:-40}" -o short-iso
   ;;
 *)
-  sed -n '2,17p' "$0"
+  sed -n '2,18p' "$0"
   ;;
 esac
